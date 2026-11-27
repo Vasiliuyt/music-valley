@@ -1,4 +1,4 @@
-{
+try {
   const host = document.getElementById("vinylView");
   const oldCv = document.getElementById("vinylCv");
   if (oldCv) oldCv.style.display = "none";
@@ -14,25 +14,25 @@
   let vox = 0, voy = 0, vsc = 1, drag = false, lx = 0, ly = 0, mx = -9999, my = -9999;
 
   const ALB = new Array(
-    { id: "dust", t: "Пыльная быль", y: "1994", e: "«Жертва талого льда» • «Рыба без трусов»", s: "Записан по ночам в студии питерского театра «Буфф». Дух ленинградских квартирников, флейта и поэтический абсурд.", l: "Александр Башлачёв • «Аквариум» • Ленинградский рок-клуб" },
-    { id: "kol", t: "Коллекционер оружия", y: "1996", e: "«Будь моей тенью» • «Любовь идёт по проводам»", s: "Московский дебют при поддержке Бориса Гребенщикова и музыкантов «Аквариума».", l: "Борис Гребенщиков • «Аквариум» • Студия «Мелодия»" },
-    { id: "lan", t: "Фонарь под глазом", y: "1997", e: "«Англо-русский словарь» • «Моя любовь»", s: "Переход к нервному гитарному саунду с фирменной флейтой Яна Николенко.", l: "Ян Николенко • Питерский арт-рок 90-х" },
-    { id: "grn", t: "Гранатовый альбом", y: "1998", e: "«Орбит без сахара» • «Выхода нет»", s: "Главный стадионный прорыв конца 90-х: гранжевые риффы и формулы эпохи.", l: "Русский гранж 90-х • «Брат-2»" },
+    { id: "dust", t: "Пыльная быль", y: "1994", e: "«Жертва талого льда» • «Рыба без трусов»", s: "Дебют, записанный по ночам в студии питерского театра «Буфф».", l: "Александр Башлачёв • «Аквариум»" },
+    { id: "kol", t: "Коллекционер оружия", y: "1996", e: "«Будь моей тенью» • «Любовь идёт по проводам»", s: "Московский дебют при поддержке Бориса Гребенщикова.", l: "Борис Гребенщиков • «Аквариум»" },
+    { id: "lan", t: "Фонарь под глазом", y: "1997", e: "«Англо-русский словарь» • «Моя любовь»", s: "Переход к нервному гитарному саунду с флейтой Яна Николенко.", l: "Ян Николенко • Питерский арт-рок 90-х" },
+    { id: "grn", t: "Гранатовый альбом", y: "1998", e: "«Орбит без сахара» • «Выхода нет»", s: "Главный стадионный прорыв конца 90-х с гранжевыми риффами.", l: "Русский гранж 90-х • «Брат-2»" },
     { id: "alt", t: "Альтависта", y: "1999", e: "«Молоко и мёд» • «Пил-курил»", s: "Тяжёлый психоделический разворот на стыке постпанка и индастриала.", l: "Постпанк • Трип-хоп конца 90-х" },
     { id: "k25", t: "25-й кадр", y: "2001", e: "«Линия жизни» • «Моё сердце» • «Феллини»", s: "Возвращение к мелодизму и совместный тур «Феллини» с «БИ-2».", l: "«БИ-2» • Саундтрек нулевых" },
-    { id: "new", t: "Новые люди", y: "2003", e: "«Новые люди» • «Время, назад!»", s: "Нервный минималистичный альбом-наблюдение за меняющимся Петербургом.", l: "Новая городская волна • Постпанк 2000-х" },
-    { id: "rev", t: "Реверсивная хроника событий", y: "2004", svg: "revers.svg", e: "«Романс» • «Мы сидели и курили»", s: "Камерный минималистичный альбом-дневник, где впервые вышел культовый акустический «Романс».", l: "Русский городской романс • Акустический минимализм" },
-    { id: "spl", t: "Раздвоение личности", y: "2007", e: "«Маяк» (стихи Маяковского) • «Скажи»", s: "Двойной альбом из 17 песен: арт-рок и прямой диалог с поэзией Владимира Маяковского.", l: "Владимир Маяковский • Серебряный век" },
-    { id: "sig", t: "Сигнал из космоса", y: "2009", e: "«Вниз головой» • «Письмо»", s: "Светлый альбом с духовой секцией и космической образностью.", l: "Петербургская инди-сцена конца нулевых" },
+    { id: "new", t: "Новые люди", y: "2003", e: "«Новые люди» • «Время, назад!»", s: "Нервный минималистичный альбом-наблюдение за Петербургом.", l: "Новая городская волна • Постпанк 2000-х" },
+    { id: "rev", t: "Реверсивная хроника событий", y: "2004", svg: "revers.svg", e: "«Романс» • «Мы сидели и курили»", s: "Камерный минималистичный дневник, где впервые вышел культовый «Романс».", l: "Русский городской романс • Минимализм" },
+    { id: "spl", t: "Раздвоение личности", y: "2007", e: "«Маяк» (стихи Маяковского) • «Скажи»", s: "Двойной альбом: арт-рок и диалог с поэзией Владимира Маяковского.", l: "Владимир Маяковский • Серебряный век" },
+    { id: "sig", t: "Сигнал из космоса", y: "2009", e: "«Вниз головой» • «Письмо»", s: "Светлый альбом с духовой секцией и космической образностью.", l: "Петербургская инди-сцена" },
     { id: "obm", t: "Обман зрения", y: "2012", e: "«Конец прекрасной эпохи» • «Петербургская свадьба»", s: "Песни на стихи Иосифа Бродского и Александра Башлачёва.", l: "Иосиф Бродский • Александр Башлачёв" },
-    { id: "res", t: "Резонанс. Часть 1 и 2", y: "2014", e: "«Рай в шалаше» • «Оркестр» • «Танцуй!»", s: "Масштабный двухчастный философский цикл с оркестровыми аранжировками.", l: "Камерный оркестровый рок" },
+    { id: "res", t: "Резонанс. Часть 1 и 2", y: "2014", e: "«Рай в шалаше» • «Оркестр» • «Танцуй!»", s: "Двухчастный философский цикл с оркестровыми аранжировками.", l: "Камерный оркестровый рок" },
     { id: "key", t: "Ключ к шифру", y: "2016", e: "«Храм» • «Окраины» • «Кит»", s: "Электронно-гитарный альбом с ломаными трип-хоп-битами.", l: "Бристольский трип-хоп • Portishead" },
-    { id: "vst", t: "Встречная полоса", y: "2018", e: "«Булгаковский марш» • «Шаман»", s: "Записан на студии «Добролёт» с аллюзиями на «Мастера и Маргариту».", l: "Студия «Добролёт» • Михаил Булгаков" },
-    { id: "vir", t: "Вира и майна", y: "2020", e: "«Передайте это Гарри Поттеру...» • «За семью печатями»", s: "Пластинка эпохи локдауна: блюз-рок и зрелая питерская меланхолия.", l: "Блюз-рок • Современная питерская сцена" }
+    { id: "vst", t: "Встречная полоса", y: "2018", e: "«Булгаковский марш» • «Шаман»", s: "Записан на «Добролёте» с отсылками к «Мастеру и Маргарите».", l: "Студия «Добролёт» • Михаил Булгаков" },
+    { id: "vir", t: "Вира и майна", y: "2020", e: "«Передайте это Гарри Поттеру...» • «За семью печатями»", s: "Пластинка эпохи локдауна: блюз-рок и зрелая меланхолия.", l: "Блюз-рок • Современный Петербург" }
   );
 
   const box = document.createElement("div");
-  box.style.cssText = "position:fixed;top:20px;right:20px;bottom:20px;width:370px;max-width:calc(100vw - 40px);background:#120b0d;border:1px solid #381820;border-radius:12px;padding:20px;z-index:130;display:none;flex-direction:column;gap:12px;color:#ede6e8;font-family:sans-serif;overflow-y:auto";
+  box.style.cssText = "position:fixed;top:20px;right:20px;bottom:20px;width:360px;max-width:calc(100vw - 40px);background:#120b0d;border:1px solid #381820;border-radius:12px;padding:20px;z-index:130;display:none;flex-direction:column;gap:12px;color:#ede6e8;font-family:sans-serif;overflow-y:auto";
   document.body.appendChild(box);
 
   function showAlb(a, dark) {
@@ -46,10 +46,6 @@
   }
   let leafItems = new Array(), sTick = 0, sWrap = null, timers = new Array();
 
-  function clearSceneTimers() {
-    while (timers.length > 0) clearTimeout(timers.pop());
-  }
-
   function openScene(alb) {
     box.style.display = "none";
     const tb = document.getElementById("topBox");
@@ -58,7 +54,7 @@
     albScene.style.opacity = "1"; albScene.style.pointerEvents = "auto";
     albScene.innerHTML = `<div style="position:fixed;top:20px;left:20px;z-index:115;display:flex;gap:8px;background:rgba(13,15,20,.9);border:1px solid rgba(255,255,255,.1);padding:8px 12px;border-radius:10px"><button id="bkGr" style="background:transparent;color:#fff;border:none;font-size:12.5px;font-weight:600;cursor:pointer">← Назад к гранату</button><button id="rpSc" style="background:rgba(255,255,255,.08);color:#ccc;border:none;padding:5px 9px;border-radius:6px;font-size:11.5px;cursor:pointer">↻ Повторить</button><button id="inSc" style="background:#8fa3c7;color:#08090c;border:none;padding:5px 10px;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer">Об альбоме</button></div>`;
     document.getElementById("bkGr").onclick = () => {
-      clearSceneTimers();
+      while (timers.length > 0) clearTimeout(timers.pop());
       albScene.style.opacity = "0"; albScene.style.pointerEvents = "none";
       stage.style.opacity = "1"; stage.style.pointerEvents = "auto";
       box.style.display = "none"; if (tb) tb.style.display = "block";
@@ -80,106 +76,61 @@
       grp.setAttribute("fill", "#d8dde8");
 
       const rawPaths = Array.from(grp.querySelectorAll("path"));
-      const subElements = new Array();
+      const subEls = new Array();
       rawPaths.forEach(orig => {
-        const dStr = orig.getAttribute("d") || "";
-        const parts = dStr.split("M");
+        const parts = (orig.getAttribute("d") || "").split("M");
         for (let i = 1; i < parts.length; i++) {
           const ch = "M" + parts.at(i).trim();
           if (ch.length < 10) continue;
           const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
           p.setAttribute("d", ch);
           grp.appendChild(p);
-          subElements.push(p);
+          subEls.push(p);
         }
         orig.remove();
       });
 
-      const groundEls = new Array();
-      const bodyEls = new Array();
-
-      subElements.forEach((p, idx) => {
+      const groundEls = new Array(), bodyEls = new Array();
+      subEls.forEach((p, idx) => {
         const b = p.getBBox();
-        const cx = (b.x + b.width * 0.5) * 0.1;
-        const cy = 592 - (b.y + b.height * 0.5) * 0.1;
-        const w = b.width * 0.1;
-        const h = b.height * 0.1;
+        const cx = (b.x + b.width * 0.5) * 0.1, cy = 592 - (b.y + b.height * 0.5) * 0.1;
+        const w = b.width * 0.1, h = b.height * 0.1;
 
         if (w > 220 && cy > 415) {
-          p.style.fill = "#b8c1d4";
-          p.style.transformBox = "fill-box";
-          p.style.transformOrigin = "center center";
+          p.style.fill = "#b8c1d4"; p.style.transformBox = "fill-box"; p.style.transformOrigin = "center center";
           groundEls.push(p);
         } else if (h > 130 && cy > 230) {
-          p.style.fill = "#ffffff";
-          p.style.cursor = "pointer";
-          p.style.transformBox = "fill-box";
-          p.style.transformOrigin = "bottom center";
+          p.style.fill = "#ffffff"; p.style.cursor = "pointer"; p.style.transformBox = "fill-box"; p.style.transformOrigin = "bottom center";
           p.onclick = () => showAlb(alb, true);
           bodyEls.push(p);
         } else {
-          p.style.fill = idx % 2 === 0 ? "#d2d8e6" : "#9aa4b8";
-          p.style.transformBox = "fill-box";
-          p.style.transformOrigin = "center center";
-          const distFromHead = Math.hypot(cx - 296, cy - 275);
-          leafItems.push({ el: p, cx: cx, cy: cy, dist: distFromHead, ph: idx * 0.37, dx: 0, dy: 0, vx: 0, vy: 0, ready: false });
+          p.style.fill = idx % 2 === 0 ? "#d2d8e6" : "#9aa4b8"; p.style.transformBox = "fill-box"; p.style.transformOrigin = "center center";
+          leafItems.push({ el: p, cx: cx, cy: cy, dist: Math.hypot(cx - 296, cy - 275), ph: idx * 0.37, dx: 0, dy: 0, vx: 0, vy: 0, ready: false });
         }
       });
 
       leafItems.sort((a, b) => a.dist - b.dist);
 
-      function playVectorBloom() {
-        clearSceneTimers();
-
-        groundEls.forEach(p => {
-          p.style.transition = "none";
-          p.style.opacity = "0";
-          p.style.transform = "scaleX(0.05)";
-        });
-        bodyEls.forEach(p => {
-          p.style.transition = "none";
-          p.style.opacity = "0";
-          p.style.transform = "scaleY(0.02)";
-        });
-        leafItems.forEach(l => {
-          l.ready = false;
-          l.dx = 0; l.dy = 0; l.vx = 0; l.vy = 0;
-          l.el.style.transition = "none";
-          l.el.style.opacity = "0";
-          l.el.style.transform = "scale(0)";
-        });
+      function playBloom() {
+        while (timers.length > 0) clearTimeout(timers.pop());
+        groundEls.forEach(p => { p.style.transition = "none"; p.style.opacity = "0"; p.style.transform = "scaleX(0.05)"; });
+        bodyEls.forEach(p => { p.style.transition = "none"; p.style.opacity = "0"; p.style.transform = "scaleY(0.02)"; });
+        leafItems.forEach(l => { l.ready = false; l.dx = 0; l.dy = 0; l.vx = 0; l.vy = 0; l.el.style.transition = "none"; l.el.style.opacity = "0"; l.el.style.transform = "scale(0)"; });
 
         requestAnimationFrame(() => requestAnimationFrame(() => {
-          groundEls.forEach(p => {
-            p.style.transition = "transform 0.85s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease";
-            p.style.opacity = "1";
-            p.style.transform = "scaleX(1)";
-          });
-
-          bodyEls.forEach(p => {
-            p.style.transition = "transform 1.05s cubic-bezier(0.22,1,0.36,1) 0.65s, opacity 0.45s ease 0.65s";
-            p.style.opacity = "1";
-            p.style.transform = "scaleY(1)";
-          });
-
-          const totalLeaves = Math.max(1, leafItems.length);
+          groundEls.forEach(p => { p.style.transition = "transform .85s ease,opacity .4s"; p.style.opacity = "1"; p.style.transform = "scaleX(1)"; });
+          bodyEls.forEach(p => { p.style.transition = "transform 1.05s ease .65s,opacity .45s ease .65s"; p.style.opacity = "1"; p.style.transform = "scaleY(1)"; });
+          const tot = Math.max(1, leafItems.length);
           leafItems.forEach((l, i) => {
-            const delay = 1.45 + (i / totalLeaves) * 1.45;
-            l.el.style.transition = `transform 0.48s cubic-bezier(0.34,1.56,0.64,1) ${delay.toFixed(2)}s, opacity 0.35s ease ${delay.toFixed(2)}s`;
-            l.el.style.opacity = "1";
-            l.el.style.transform = "scale(1)";
-
-            const tm = setTimeout(() => {
-              l.el.style.transition = "none";
-              l.ready = true;
-            }, (delay + 0.52) * 1000);
-            timers.push(tm);
+            const d = 1.45 + (i / tot) * 1.45;
+            l.el.style.transition = `transform .48s cubic-bezier(.34,1.56,.64,1) ${d.toFixed(2)}s,opacity .35s ease ${d.toFixed(2)}s`;
+            l.el.style.opacity = "1"; l.el.style.transform = "scale(1)";
+            timers.push(setTimeout(() => { l.el.style.transition = "none"; l.ready = true; }, (d + 0.52) * 1000));
           });
         }));
       }
-
-      document.getElementById("rpSc").onclick = playVectorBloom;
-      playVectorBloom();
+      document.getElementById("rpSc").onclick = playBloom;
+      playBloom();
     });
   }
 
@@ -252,3 +203,14 @@
         const dx = l.cx - sx, dy = l.cy - sy, d = Math.hypot(dx, dy);
         let px = 0, py = 0;
         if (d < 60 && d > 0.1) { const f = (1 - d / 60) * 45; px = (dx / d) * f; py = -(dy / d) * f; }
+        l.vx = (l.vx + (wx + px - l.dx) * 0.14) * 0.76; l.vy = (l.vy + (wy + py - l.dy) * 0.14) * 0.76;
+        l.dx += l.vx; l.dy += l.vy;
+        l.el.style.transform = `translate(${l.dx.toFixed(2)}px,${l.dy.toFixed(2)}px)`;
+      }
+    }
+    requestAnimationFrame(loopAll);
+  }
+  loopAll();
+
+  stage.onmousedown = e => { drag = true; lx = e.clientX; ly = e.clientY; stage.style.cursor = "grabbing"; };
+  window.addEventListener("mousemove", e => { mx = e.clientX; my = e.clientY; if (!drag) return; vox += e.clientX - lx; voy += e.clientY - ly; lx = e.clientX; ly = e.clientY; wrap.style.transform = `translate(${vox}px,${voy}px) scale(${vsc})`; });
