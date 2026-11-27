@@ -30,65 +30,81 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
     svg.style.cssText = "width:100%;height:100%;display:block;overflow:visible";
     grp.removeAttribute("fill");
 
-    const orig = grp.querySelector("path");
-    const parts = (orig ? orig.getAttribute("d") : "").split("M");
+    // Собираем ВСЕ пути (и основной контур, и глаз) и разрезаем каждый на отдельные штрихи
+    const origPaths = Array.from(grp.querySelectorAll("path"));
     const allSubs = new Array();
 
-    for (let i = 1; i < parts.length; i++) {
-      const ch = "M" + parts.at(i).trim();
-      if (ch.length < 10) continue;
-      const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      p.setAttribute("d", ch);
-      grp.appendChild(p);
-      const b = p.getBBox();
-      const cx = (b.x + b.width * 0.5) * 0.1;
-      const cy = 592 - (b.y + b.height * 0.5) * 0.1;
-      const len = p.getTotalLength();
-      allSubs.push({ el: p, cx: cx, cy: cy, w: b.width * 0.1, h: b.height * 0.1, len: len });
-    }
-    if (orig) orig.remove();
+    origPaths.forEach(function(orig) {
+      const parts = (orig.getAttribute("d") || "").split("M");
+      for (let i = 1; i < parts.length; i++) {
+        const ch = "M" + parts.at(i).trim();
+        if (ch.length < 8) continue;
+        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", ch);
+        grp.appendChild(p);
+        const b = p.getBBox();
+        const cx = (b.x + b.width * 0.5) * 0.1;
+        const cy = 592 - (b.y + b.height * 0.5) * 0.1;
+        const len = Math.max(10, p.getTotalLength());
+        allSubs.push({ el: p, cx: cx, cy: cy, w: b.width * 0.1, h: b.height * 0.1, len: len });
+      }
+      orig.remove();
+    });
 
-    // Разделяем контуры: 1) Земля, 2) Человечек, 3) Каждый отдельный лист кроны
+    // Сортируем все элементы по очереди прорисовки:
+    // 1. Земля (самый низ) -> 2. Человечек и глаз (центр) -> 3. Листья от головы наружу
     const ground = new Array(), human = new Array(), crown = new Array();
     allSubs.forEach(function(it) {
-      if (it.w > 220 && it.cy > 415) ground.push(it);
-      else if (it.h > 130 && it.cy > 230) human.push(it);
-      else {
+      if (it.w > 220 && it.cy > 415) {
+        ground.push(it);
+      } else if ((it.h > 130 && it.cy > 230) || (it.w < 18 && it.h < 18 && Math.hypot(it.cx - 302, it.cy - 276) < 25)) {
+        human.push(it);
+      } else {
         it.dist = Math.hypot(it.cx - 296, it.cy - 275);
         crown.push(it);
       }
     });
     crown.sort(function(a, b) { return a.dist - b.dist; });
 
-    function drawStroke(list, baseDelay, stepSpan, drawDur, strokeCol, fillCol) {
-      const n = Math.max(1, list.length);
-      list.forEach(function(it, idx) {
-        const d = baseDelay + (idx / n) * stepSpan;
+    function resetAll(list, strokeCol, fillCol) {
+      list.forEach(function(it) {
         it.el.style.transition = "none";
         it.el.style.stroke = strokeCol;
-        it.el.style.strokeWidth = "14";
+        it.el.style.strokeWidth = "4.5";
         it.el.style.strokeLinecap = "round";
+        it.el.style.strokeLinejoin = "round";
         it.el.style.fill = fillCol;
         it.el.style.fillOpacity = "0";
         it.el.style.strokeDasharray = it.len;
         it.el.style.strokeDashoffset = it.len;
+      });
+    }
 
+    function animateGroup(list, startSec, spanSec, durSec) {
+      const n = Math.max(1, list.length);
+      list.forEach(function(it, idx) {
+        const delay = startSec + (idx / n) * spanSec;
         timers.push(setTimeout(function() {
-          it.el.style.transition = "stroke-dashoffset " + drawDur + "s cubic-bezier(.25,.8,.25,1), fill-opacity .45s ease " + (drawDur * 0.65).toFixed(2) + "s";
+          it.el.style.transition = "stroke-dashoffset " + durSec + "s cubic-bezier(.25,.8,.25,1), fill-opacity .45s ease " + (durSec * 0.75).toFixed(2) + "s";
           it.el.style.strokeDashoffset = "0";
           it.el.style.fillOpacity = "1";
-        }, d * 1000));
+        }, delay * 1000));
       });
     }
 
     function playLineDraw() {
       clearTimers();
-      // 1. Прорисовывается линия земли (0.0с)
-      drawStroke(ground, 0.05, 0.1, 0.95, "#b8c1d4", "#b8c1d4");
-      // 2. Вырисовывается силуэт человечка (0.7с)
-      drawStroke(human, 0.75, 0.15, 1.15, "#ffffff", "#ffffff");
-      // 3. Волна от головы к краям кроны: каждый листочек прорисовывается своим контуром! (1.5с)
-      drawStroke(crown, 1.55, 1.85, 0.75, "#cfd6e6", "#d8dde8");
+      // Сбрасываем ВСЁ в невидимое состояние до старта
+      resetAll(ground, "#b8c1d4", "#b8c1d4");
+      resetAll(human, "#ffffff", "#ffffff");
+      resetAll(crown, "#cfd6e6", "#d8dde8");
+
+      // Запускаем пошаговую прорисовку контуров
+      setTimeout(function() {
+        animateGroup(ground, 0.05, 0.1, 1.0);
+        animateGroup(human, 0.85, 0.25, 1.35);
+        animateGroup(crown, 1.85, 2.2, 0.85);
+      }, 40);
     }
 
     document.getElementById("rpSc").onclick = playLineDraw;
