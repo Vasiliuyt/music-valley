@@ -29,26 +29,26 @@ function pt(r, a) {
   return { x: Math.cos(a) * r, y: Math.sin(a) * r * TILT };
 }
 
-const CANALS = [
+const CANALS = new Array(
   { rBase: 205, width: 15, amp1: 11, freq1: 2, phase1: 0.3, amp2: 5, freq2: 5, phase2: 1.1 },
   { rBase: 325, width: 13, amp1: 14, freq1: 3, phase1: 1.7, amp2: 6, freq2: 4, phase2: 0.5 }
-];
+);
 
 function getCanalR(c, a) {
   return c.rBase + Math.sin(a * c.freq1 + c.phase1) * c.amp1 + Math.cos(a * c.freq2 + c.phase2) * c.amp2;
 }
 
-const STREETS_R =;
+const STREETS_R = new Array(158, 265, 378);
 function getStreetR(baseR, a) {
   return baseR + Math.sin(a * 2 + baseR * 0.02) * 6;
 }
 
-const ALLEYS = [
+const ALLEYS = new Array(
   { a: 0.35, r1: 122, r2: 205 }, { a: 1.15, r1: 205, r2: 325 }, { a: 1.95, r1: 122, r2: 205 },
   { a: 2.65, r1: 205, r2: 325 }, { a: 3.45, r1: 122, r2: 205 }, { a: 4.15, r1: 205, r2: 325 },
   { a: 4.95, r1: 122, r2: 205 }, { a: 5.75, r1: 205, r2: 325 },
   { a: 0.75, r1: 325, r2: 418 }, { a: 2.35, r1: 325, r2: 418 }, { a: 3.85, r1: 325, r2: 418 }, { a: 5.35, r1: 325, r2: 418 }
-];
+);
 
 function isRoadOrWater(r, a) {
   const na = ((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
@@ -64,14 +64,14 @@ function isRoadOrWater(r, a) {
   return false;
 }
 
-const HOUSES = [];
+const HOUSES = new Array();
 let seed = 108;
 function rnd() {
   seed = (seed * 1664525 + 1013904223) % 4294967296;
   return seed / 4294967296;
 }
 
-const BUILDING_LINES =;
+const BUILDING_LINES = new Array(134, 145, 172, 188, 224, 249, 280, 306, 344, 364, 392, 406);
 
 BUILDING_LINES.forEach((rLine, lineIdx) => {
   const count = Math.floor(rLine * 0.24);
@@ -192,11 +192,11 @@ function drawVinylLoop() {
     vx.strokeStyle = "#0a0c11";
     vx.lineWidth = 13;
     vx.stroke();
-    vx.setLineDash([4, 6]);
+    vx.setLineDash(new Array(5, 7));
     vx.strokeStyle = "rgba(255, 255, 255, 0.09)";
     vx.lineWidth = 0.8;
     vx.stroke();
-    vx.setLineDash([]);
+    vx.setLineDash(new Array());
   });
 
   ALLEYS.forEach(al => {
@@ -220,7 +220,8 @@ function drawVinylLoop() {
     vx.lineWidth = c.width;
     vx.stroke();
 
-    [0.8, 2.4, 4.0, 5.5].forEach(ba => {
+    const bridges = new Array(0.8, 2.4, 4.0, 5.5);
+    bridges.forEach(ba => {
       const rMid = getCanalR(c, ba);
       const b1 = pt(rMid - c.width * 0.65, ba), b2 = pt(rMid + c.width * 0.65, ba);
       vx.beginPath(); vx.moveTo(b1.x, b1.y); vx.lineTo(b2.x, b2.y);
