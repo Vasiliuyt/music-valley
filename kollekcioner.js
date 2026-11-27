@@ -7,7 +7,7 @@ window.launchKollekcionerScene = function(alb, albScene, stage, box, showAlb) {
 
   albScene.innerHTML = "<div style='position:fixed;top:20px;left:20px;z-index:115;display:flex;gap:8px;background:#121014;border:1px solid #2b2533;padding:8px 12px;border-radius:10px'><button id='bkGr' style='background:transparent;color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer'>← Назад к гранату</button><button id='inSc' style='background:#d4a359;color:#0b0a0d;border:none;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer'>Об альбоме (1996)</button></div>";
 
-  let rafId = 0, hoveredIdx = -1;
+  let rafId = 0;
 
   document.getElementById("bkGr").onclick = function() {
     cancelAnimationFrame(rafId);
@@ -21,7 +21,7 @@ window.launchKollekcionerScene = function(alb, albScene, stage, box, showAlb) {
   sWrap.style.cssText = "position:relative;width:min(88vh,88vw);height:min(88vh,88vw)";
   albScene.appendChild(sWrap);
 
-  fetch("kollekcioner.svg?v=4").then(function(r) { return r.text(); }).then(function(txt) {
+  fetch("kollekcioner.svg?v=5").then(function(r) { return r.text(); }).then(function(txt) {
     sWrap.innerHTML = txt.slice(txt.indexOf("<svg"));
     const svg = sWrap.querySelector("svg");
     const grp = svg ? svg.querySelector("g") : null;
@@ -30,70 +30,55 @@ window.launchKollekcionerScene = function(alb, albScene, stage, box, showAlb) {
     grp.removeAttribute("fill");
 
     const paths = Array.from(grp.querySelectorAll("path"));
-    const palette = new Array("#e6dfd3", "#d4a359", "#c9bfa8", "#e0c389", "#b8ad96", "#d9b166", "#ded6c5", "#cfa663");
-
-    const walkers = paths.map(function(p) {
+    const frames = paths.map(function(p) {
       const b = p.getBBox();
-      return { el: p, cx: b.x + b.width * 0.5, baseCol: "#e6dfd3", phase: 0 };
+      return { el: p, cx: b.x + b.width * 0.5, d: p.getAttribute("d") };
     });
 
-    walkers.sort(function(a, b) { return a.cx - b.cx; });
+    // Сортируем 8 фаз шага слева направо
+    frames.sort(function(a, b) { return a.cx - b.cx; });
 
-    walkers.forEach(function(w, idx) {
-      const col = palette.at(idx % palette.length);
-      w.baseCol = col;
-      w.phase = idx * 0.85;
-      w.el.style.fill = col;
-      w.el.style.transformBox = "fill-box";
-      w.el.style.transformOrigin = "bottom center";
-      w.el.style.cursor = "pointer";
-      w.el.style.transition = "fill 0.2s ease, filter 0.2s ease";
+    // Создаём 3 идущих друг за другом кино-персонажа, каждый проигрывает все 8 фаз шага по кругу
+    const palette = new Array("#e6dfd3", "#d4a359", "#c9bfa8");
+    const actors = new Array();
 
-      w.el.onmouseenter = function() {
-        hoveredIdx = idx;
-        w.el.style.fill = "#ffd07b";
-        w.el.style.filter = "drop-shadow(0 0 22px rgba(242,184,92,0.85))";
-      };
-      w.el.onmouseleave = function() {
-        hoveredIdx = -1;
-        w.el.style.fill = w.baseCol;
-        w.el.style.filter = "none";
-      };
-      w.el.onclick = function() { showAlb(alb, true); };
-    });
-
-    const t0 = performance.now();
-    const span = 6800;
-
-    function walkLoop(now) {
-      const t = (now - t0) / 1000;
-      const march = (t * 420) % span;
-
-      for (let i = 0; i < walkers.length; i++) {
-        const w = walkers.at(i);
-        const isHov = (hoveredIdx === i);
-
-        // Непрерывный шаг слева направо с плавным переносом в начало колонны
-        let shiftX = march;
-        if (w.cx + shiftX > 6400) shiftX -= span;
-
-        // Физика шага: подпрыгивание на каждом шаге, наклон корпуса вперёд и пружина коленей
-        const stepCycle = t * 5.2 + w.phase;
-        const bounce = Math.abs(Math.sin(stepCycle)) * -85;
-        const lean = 4.5 + Math.sin(stepCycle * 2) * 2.8;
-        const squashY = 1 + Math.abs(Math.sin(stepCycle)) * 0.045;
-        const squashX = 1 - Math.abs(Math.sin(stepCycle)) * 0.025;
-        const sc = isHov ? 1.07 : 1;
-
-        w.el.style.transform =
-          "translate(" + shiftX.toFixed(1) + "px, " + (bounce + (isHov ? -50 : 0)).toFixed(1) + "px) " +
-          "rotate(" + lean.toFixed(2) + "deg) " +
-          "scale(" + (squashX * sc).toFixed(3) + ", " + (squashY * sc).toFixed(3) + ")";
-      }
-
-      rafId = requestAnimationFrame(walkLoop);
+    for (let k = 0; k < 3; k++) {
+      const actorPath = document.createElementNS("http://w3.org", "path");
+      actorPath.style.fill = palette.at(k);
+      actorPath.style.cursor = "pointer";
+      actorPath.style.transition = "filter 0.2s ease";
+      actorPath.onmouseenter = function() { actorPath.style.filter = "drop-shadow(0 0 22px rgba(242,184,92,0.85))"; };
+      actorPath.onmouseleave = function() { actorPath.style.filter = "none"; };
+      actorPath.onclick = function() { showAlb(alb, true); };
+      grp.appendChild(actorPath);
+      actors.push({ el: actorPath, offsetX: k * 2100, phaseOffset: k * 2.6 });
     }
 
-    rafId = requestAnimationFrame(walkLoop);
+    // Скрываем исходные статичные контуры
+    frames.forEach(function(f) { f.el.style.display = "none"; });
+
+    const t0 = performance.now();
+    const fps = 9.5; // скорость смены фаз шага (кадров в секунду)
+
+    function cinemaLoop(now) {
+      const t = (now - t0) / 1000;
+
+      for (let k = 0; k < actors.length; k++) {
+        const act = actors.at(k);
+        const frameFloat = t * fps + act.phaseOffset;
+        const idx = Math.floor(frameFloat) % frames.length;
+        const curFrame = frames.at(idx);
+
+        // Ставим текущую фазу шага и плавно ведем персонажа через сцену
+        act.el.setAttribute("d", curFrame.d);
+        const walkPos = ((t * 580 + act.offsetX) % 6600) - 600;
+        const dx = walkPos - curFrame.cx;
+        act.el.setAttribute("transform", "translate(" + dx.toFixed(1) + ", 0)");
+      }
+
+      rafId = requestAnimationFrame(cinemaLoop);
+    }
+
+    rafId = requestAnimationFrame(cinemaLoop);
   });
 };
