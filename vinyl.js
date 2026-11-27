@@ -44,7 +44,11 @@
     box.innerHTML = `<div style="display:flex;justify-content:space-between"><div><div style="font-size:10px;color:${ac};font-weight:700">СПЛИН • ${a.y}</div><h2 style="font-size:20px;color:#fff;margin-top:2px">${a.t}</h2></div><button id="clsB" style="background:rgba(255,255,255,.08);color:#bbb;border:none;padding:5px 10px;border-radius:6px;cursor:pointer">✕</button></div><div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:10px;border-radius:8px"><div style="font-size:9.5px;color:${ac};font-weight:700;margin-bottom:3px">ТОЧКА ВХОДА</div><div style="font-size:13px;font-weight:600;color:#fff">${a.e}</div></div><div style="background:rgba(255,255,255,.025);border-left:2px solid ${ac};padding:10px;font-size:12.5px;line-height:1.48;color:#d6d8de">${a.s}</div><div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);padding:9px;border-radius:8px;font-size:12px;color:#b8bec9"><b style="font-size:10px;color:#7c8291;display:block;margin-bottom:2px">НИТОЧКИ СВЯЗЕЙ</b>${a.l}</div><div style="margin-top:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px"><a href="https://yandex.ru{q}" target="_blank" style="background:#ffcc00;color:#000;text-align:center;padding:10px;border-radius:8px;text-decoration:none;font-weight:700;font-size:12px">Яндекс Музыка ↗</a><a href="https://vk.com{q}" target="_blank" style="background:rgba(255,255,255,.08);color:#fff;text-align:center;padding:10px;border-radius:8px;text-decoration:none;font-weight:600;font-size:12px">VK Музыка ↗</a><a href="https://youtube.com{encodeURIComponent("Сплин " + a.t + " клип")}" target="_blank" style="grid-column:1/-1;background:${ac};color:${dark?"#08090c":"#fff"};text-align:center;padding:10px;border-radius:8px;text-decoration:none;font-weight:700;font-size:12.5px">Клипы и лайвы ↗</a></div>`;
     document.getElementById("clsB").onclick = () => { box.style.display = "none"; };
   }
-  let growAnimId = 0;
+  let leafItems = new Array(), sTick = 0, sWrap = null, timers = new Array();
+
+  function clearSceneTimers() {
+    while (timers.length > 0) clearTimeout(timers.pop());
+  }
 
   function openScene(alb) {
     box.style.display = "none";
@@ -54,63 +58,126 @@
     albScene.style.opacity = "1"; albScene.style.pointerEvents = "auto";
     albScene.innerHTML = `<div style="position:fixed;top:20px;left:20px;z-index:115;display:flex;gap:8px;background:rgba(13,15,20,.9);border:1px solid rgba(255,255,255,.1);padding:8px 12px;border-radius:10px"><button id="bkGr" style="background:transparent;color:#fff;border:none;font-size:12.5px;font-weight:600;cursor:pointer">← Назад к гранату</button><button id="rpSc" style="background:rgba(255,255,255,.08);color:#ccc;border:none;padding:5px 9px;border-radius:6px;font-size:11.5px;cursor:pointer">↻ Повторить</button><button id="inSc" style="background:#8fa3c7;color:#08090c;border:none;padding:5px 10px;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer">Об альбоме</button></div>`;
     document.getElementById("bkGr").onclick = () => {
-      cancelAnimationFrame(growAnimId);
+      clearSceneTimers();
       albScene.style.opacity = "0"; albScene.style.pointerEvents = "none";
       stage.style.opacity = "1"; stage.style.pointerEvents = "auto";
       box.style.display = "none"; if (tb) tb.style.display = "block";
     };
     document.getElementById("inSc").onclick = () => showAlb(alb, true);
 
-    const sWrap = document.createElement("div");
-    sWrap.style.cssText = "position:relative;width:min(84vh,84vw);height:min(84vh,84vw);pointer-events:none;user-select:none";
+    sWrap = document.createElement("div");
+    sWrap.style.cssText = "position:relative;width:min(84vh,84vw);height:min(84vh,84vw)";
     albScene.appendChild(sWrap);
+    leafItems = new Array();
 
     fetch(alb.svg).then(r => r.text()).then(txt => {
-      const clean = txt.replace(/<\?xml[\s\S]*?\?>/i, "").replace(/<!DOCTYPE[\s\S]*?>/i, "").replace(/fill="#000000"/gi, 'fill="#d8dde8"');
+      sWrap.innerHTML = txt.replace(/<\?xml[\s\S]*?\?>/i, "").replace(/<!DOCTYPE[\s\S]*?>/i, "");
+      const svg = sWrap.querySelector("svg");
+      const grp = svg ? svg.querySelector("g") : null;
+      if (!svg || !grp) return;
 
-      sWrap.innerHTML = `
-        <div id="lyrGround" style="position:absolute;inset:0;clip-path:inset(72% 50% 0% 50%)">${clean}</div>
-        <div id="lyrHuman"  style="position:absolute;inset:0;clip-path:inset(73% 0% 27% 0%)">${clean}</div>
-        <div id="lyrCrown"  style="position:absolute;inset:0;clip-path:circle(0% at 49.5% 47%)">${clean}</div>
-      `;
+      svg.style.cssText = "width:100%;height:100%;display:block;overflow:visible";
+      grp.setAttribute("fill", "#d8dde8");
 
-      sWrap.querySelectorAll("svg").forEach(s => { s.style.cssText = "width:100%;height:100%;display:block"; });
+      const rawPaths = Array.from(grp.querySelectorAll("path"));
+      const subElements = new Array();
+      rawPaths.forEach(orig => {
+        const dStr = orig.getAttribute("d") || "";
+        const chunks = dStr.match(/M[^M]+/gi) || new Array();
+        chunks.forEach(ch => {
+          const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          p.setAttribute("d", ch.trim());
+          grp.appendChild(p);
+          subElements.push(p);
+        });
+        orig.remove();
+      });
 
-      const lG = document.getElementById("lyrGround");
-      const lH = document.getElementById("lyrHuman");
-      const lC = document.getElementById("lyrCrown");
+      const groundEls = new Array();
+      const bodyEls = new Array();
 
-      function playGrow() {
-        cancelAnimationFrame(growAnimId);
-        const start = performance.now();
+      subElements.forEach((p, idx) => {
+        const b = p.getBBox();
+        const cx = (b.x + b.width * 0.5) * 0.1;
+        const cy = 592 - (b.y + b.height * 0.5) * 0.1;
+        const w = b.width * 0.1;
+        const h = b.height * 0.1;
 
-        function step(now) {
-          const el = (now - start) / 1000;
-
-          const p1 = Math.min(1, Math.max(0, el / 0.85));
-          const e1 = 1 - Math.pow(1 - p1, 3);
-          const side = (50 * (1 - e1)).toFixed(2);
-          lG.style.clipPath = `inset(72% ${side}% 0% ${side}%)`;
-
-          const p2 = Math.min(1, Math.max(0, (el - 0.65) / 1.1));
-          const e2 = 1 - Math.pow(1 - p2, 2.4);
-          const topCut = (73 - 26 * e2).toFixed(2);
-          lH.style.clipPath = `inset(${topCut}% 0% 27% 0%)`;
-
-          const p3 = Math.min(1, Math.max(0, (el - 1.55) / 1.5));
-          const e3 = 1 - Math.pow(1 - p3, 2.5);
-          const rad = (52 * e3).toFixed(2);
-          lC.style.clipPath = `circle(${rad}% at 49.5% 47%)`;
-
-          if (el < 3.15) {
-            growAnimId = requestAnimationFrame(step);
-          }
+        if (w > 220 && cy > 415) {
+          p.style.fill = "#b8c1d4";
+          p.style.transformBox = "fill-box";
+          p.style.transformOrigin = "center center";
+          groundEls.push(p);
+        } else if (h > 130 && cy > 230) {
+          p.style.fill = "#ffffff";
+          p.style.cursor = "pointer";
+          p.style.transformBox = "fill-box";
+          p.style.transformOrigin = "bottom center";
+          p.onclick = () => showAlb(alb, true);
+          bodyEls.push(p);
+        } else {
+          p.style.fill = idx % 2 === 0 ? "#d2d8e6" : "#9aa4b8";
+          p.style.transformBox = "fill-box";
+          p.style.transformOrigin = "center center";
+          const distFromHead = Math.hypot(cx - 296, cy - 275);
+          leafItems.push({ el: p, cx: cx, cy: cy, dist: distFromHead, ph: idx * 0.37, dx: 0, dy: 0, vx: 0, vy: 0, ready: false });
         }
-        growAnimId = requestAnimationFrame(step);
+      });
+
+      leafItems.sort((a, b) => a.dist - b.dist);
+
+      function playVectorBloom() {
+        clearSceneTimers();
+
+        groundEls.forEach(p => {
+          p.style.transition = "none";
+          p.style.opacity = "0";
+          p.style.transform = "scaleX(0.05)";
+        });
+        bodyEls.forEach(p => {
+          p.style.transition = "none";
+          p.style.opacity = "0";
+          p.style.transform = "scaleY(0.02)";
+        });
+        leafItems.forEach(l => {
+          l.ready = false;
+          l.dx = 0; l.dy = 0; l.vx = 0; l.vy = 0;
+          l.el.style.transition = "none";
+          l.el.style.opacity = "0";
+          l.el.style.transform = "scale(0)";
+        });
+
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          groundEls.forEach(p => {
+            p.style.transition = "transform 0.85s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease";
+            p.style.opacity = "1";
+            p.style.transform = "scaleX(1)";
+          });
+
+          bodyEls.forEach(p => {
+            p.style.transition = "transform 1.05s cubic-bezier(0.22,1,0.36,1) 0.65s, opacity 0.45s ease 0.65s";
+            p.style.opacity = "1";
+            p.style.transform = "scaleY(1)";
+          });
+
+          const totalLeaves = Math.max(1, leafItems.length);
+          leafItems.forEach((l, i) => {
+            const delay = 1.45 + (i / totalLeaves) * 1.45;
+            l.el.style.transition = `transform 0.48s cubic-bezier(0.34,1.56,0.64,1) ${delay.toFixed(2)}s, opacity 0.35s ease ${delay.toFixed(2)}s`;
+            l.el.style.opacity = "1";
+            l.el.style.transform = "scale(1)";
+
+            const tm = setTimeout(() => {
+              l.el.style.transition = "none";
+              l.ready = true;
+            }, (delay + 0.52) * 1000);
+            timers.push(tm);
+          });
+        }));
       }
 
-      document.getElementById("rpSc").onclick = playGrow;
-      playGrow();
+      document.getElementById("rpSc").onclick = playVectorBloom;
+      playVectorBloom();
     });
   }
 
@@ -173,12 +240,14 @@
         }
       }
     }
-    requestAnimationFrame(loopAll);
-  }
-  loopAll();
-
-  stage.onmousedown = e => { drag = true; lx = e.clientX; ly = e.clientY; stage.style.cursor = "grabbing"; };
-  window.addEventListener("mousemove", e => { mx = e.clientX; my = e.clientY; if (!drag) return; vox += e.clientX - lx; voy += e.clientY - ly; lx = e.clientX; ly = e.clientY; wrap.style.transform = `translate(${vox}px,${voy}px) scale(${vsc})`; });
-  window.addEventListener("mouseup", () => { drag = false; stage.style.cursor = "grab"; });
-  stage.onwheel = e => { e.preventDefault(); vsc = Math.min(2.6, Math.max(0.6, vsc * (e.deltaY < 0 ? 1.1 : 0.9))); wrap.style.transform = `translate(${vox}px,${voy}px) scale(${vsc})`; };
-}
+    sTick += 0.03;
+    if (albScene.style.pointerEvents === "auto" && leafItems.length > 0 && sWrap) {
+      const rc = sWrap.getBoundingClientRect();
+      const sx = rc.width > 0 ? ((mx - rc.left) / rc.width) * 600 : -9999, sy = rc.height > 0 ? ((my - rc.top) / rc.height) * 592 : -9999;
+      for (let i = 0; i < leafItems.length; i++) {
+        const l = leafItems.at(i); if (!l.ready) continue;
+        const wx = Math.sin(sTick + l.ph) * 7, wy = Math.cos(sTick * 0.8 + l.ph) * 4;
+        const dx = l.cx - sx, dy = l.cy - sy, d = Math.hypot(dx, dy);
+        let px = 0, py = 0;
+        if (d < 60 && d > 0.1) { const f = (1 - d / 60) * 45; px = (dx / d) * f; py = -(dy / d) * f; }
+        l.vx = (l.vx + (wx + px - l.dx) * 0.14) * 0.76; l.vy = (l.vy + (wy + py - l.dy) * 0.14) * 0.76;
