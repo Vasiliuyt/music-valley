@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Музыкальная Долина — Санкт-Петербург</title>
-<link rel="stylesheet" href="https://unpkg.com" />
-<script src="https://unpkg.com"></script>
+<link rel="stylesheet" href="https://cloudflare.com" />
+<script src="https://cloudflare.com"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#090a0d;color:#d6d8de;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow:hidden;height:100vh}
@@ -20,6 +20,7 @@ body{background:#090a0d;color:#d6d8de;font-family:-apple-system,BlinkMacSystemFo
 #mapView.active{opacity:1;pointer-events:auto}
 .leaflet-container{background:#090a0d !important}
 .leaflet-control-attribution{display:none !important}
+.dark-tiles{filter:invert(100%) hue-rotate(180deg) brightness(88%) contrast(95%) saturate(30%)}
 </style>
 </head>
 <body>
@@ -83,11 +84,13 @@ function openCityMap(city){
 
   if(!map){
     map=L.map("mapView",{zoomControl:false}).setView(city.mapCenter,city.mapZoom);
-    L.tileLayer("https://{s}://{z}/{x}/{y}{r}.png",{maxZoom:19}).addTo(map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+      maxZoom:19,
+      className:"dark-tiles"
+    }).addTo(map);
     L.control.zoom({position:"bottomright"}).addTo(map);
-  }else{
-    setTimeout(()=>map.invalidateSize(),200);
   }
+  setTimeout(()=>map.invalidateSize(),250);
 }
 
 document.getElementById("backBtn").onclick=()=>{
