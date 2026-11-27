@@ -61,75 +61,46 @@
     };
     document.getElementById("inSc").onclick = () => showAlb(alb, true);
 
-    // Статичный плакат по центру (без перетаскивания и зума)
     const sWrap = document.createElement("div");
     sWrap.style.cssText = "position:relative;width:min(84vh,84vw);height:min(84vh,84vw);pointer-events:none;user-select:none";
     albScene.appendChild(sWrap);
 
     fetch(alb.svg).then(r => r.text()).then(txt => {
-      sWrap.innerHTML = txt.replace(/<\?xml[\s\S]*?\?>/i, "").replace(/<!DOCTYPE[\s\S]*?>/i, "");
-      const svg = sWrap.querySelector("svg");
-      if (!svg) return;
-      svg.style.cssText = "width:100%;height:100%;display:block;overflow:visible";
+      const clean = txt.replace(/<\?xml[\s\S]*?\?>/i, "").replace(/<!DOCTYPE[\s\S]*?>/i, "").replace(/fill="#000000"/gi, 'fill="#d8dde8"');
 
-      const grp = svg.querySelector("g");
-      if (grp) grp.setAttribute("fill", "#d8dde8");
+      sWrap.innerHTML = `
+        <div id="lyrGround" style="position:absolute;inset:0;clip-path:inset(72% 50% 0% 50%)">${clean}</div>
+        <div id="lyrHuman"  style="position:absolute;inset:0;clip-path:inset(73% 0% 27% 0%)">${clean}</div>
+        <div id="lyrCrown"  style="position:absolute;inset:0;clip-path:circle(0% at 49.5% 47%)">${clean}</div>
+      `;
 
-      // Создаём составную маску прорастания (Земля -> Человечек снизу вверх -> Крона из головы)
-      const ns = "http://www.w3.org/2000/svg";
-      const defs = document.createElementNS(ns, "defs");
-      const clip = document.createElementNS(ns, "clipPath");
-      clip.id = "growClip";
+      sWrap.querySelectorAll("svg").forEach(s => { s.style.cssText = "width:100%;height:100%;display:block"; });
 
-      // 1. Прямоугольник земли (y от 425 до 592 в системе viewBox 0..600 x 0..592)
-      const groundRect = document.createElementNS(ns, "rect");
-      groundRect.setAttribute("y", "422");
-      groundRect.setAttribute("height", "175");
-
-      // 2. Прямоугольник ствола-человечка (растёт вверх от земли y=430 до головы y=275)
-      const bodyRect = document.createElementNS(ns, "rect");
-      bodyRect.setAttribute("x", "220");
-      bodyRect.setAttribute("width", "160");
-
-      // 3. Круг кроны дерева (раскрывается радиально из головы человечка cx=296, cy=278)
-      const crownCircle = document.createElementNS(ns, "circle");
-      crownCircle.setAttribute("cx", "296");
-      crownCircle.setAttribute("cy", "278");
-
-      clip.appendChild(groundRect);
-      clip.appendChild(bodyRect);
-      clip.appendChild(crownCircle);
-      defs.appendChild(clip);
-      svg.insertBefore(defs, svg.firstChild);
-
-      if (grp) grp.setAttribute("clip-path", "url(#growClip)");
+      const lG = document.getElementById("lyrGround");
+      const lH = document.getElementById("lyrHuman");
+      const lC = document.getElementById("lyrCrown");
 
       function playGrow() {
         cancelAnimationFrame(growAnimId);
         const start = performance.now();
 
         function step(now) {
-          const el = (now - start) / 1000; // время в секундах
+          const el = (now - start) / 1000;
 
-          // Фаза 1 (0.0 -> 0.85с): линия земли расходится от центра к краям
           const p1 = Math.min(1, Math.max(0, el / 0.85));
           const e1 = 1 - Math.pow(1 - p1, 3);
-          const gw = 600 * e1;
-          groundRect.setAttribute("x", (300 - gw / 2).toFixed(1));
-          groundRect.setAttribute("width", gw.toFixed(1));
+          const side = (50 * (1 - e1)).toFixed(2);
+          lG.style.clipPath = `inset(72% ${side}% 0% ${side}%)`;
 
-          // Фаза 2 (0.65 -> 1.75с): человечек вырастает из земли снизу вверх (от y=432 до y=268)
           const p2 = Math.min(1, Math.max(0, (el - 0.65) / 1.1));
           const e2 = 1 - Math.pow(1 - p2, 2.4);
-          const bh = 166 * e2;
-          bodyRect.setAttribute("y", (432 - bh).toFixed(1));
-          bodyRect.setAttribute("height", bh.toFixed(1));
+          const topCut = (73 - 26 * e2).toFixed(2);
+          lH.style.clipPath = `inset(${topCut}% 0% 27% 0%)`;
 
-          // Фаза 3 (1.55 -> 3.05с): крона дерева распускается из головы человечка
           const p3 = Math.min(1, Math.max(0, (el - 1.55) / 1.5));
           const e3 = 1 - Math.pow(1 - p3, 2.5);
-          const cr = 255 * e3;
-          crownCircle.setAttribute("r", cr.toFixed(1));
+          const rad = (52 * e3).toFixed(2);
+          lC.style.clipPath = `circle(${rad}% at 49.5% 47%)`;
 
           if (el < 3.15) {
             growAnimId = requestAnimationFrame(step);
