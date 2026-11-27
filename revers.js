@@ -30,7 +30,6 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
     svg.style.cssText = "width:100%;height:100%;display:block;overflow:visible";
     grp.removeAttribute("fill");
 
-    // Собираем ВСЕ пути (и основной контур, и глаз) и разрезаем каждый на отдельные штрихи
     const origPaths = Array.from(grp.querySelectorAll("path"));
     const allSubs = new Array();
 
@@ -39,20 +38,18 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
       for (let i = 1; i < parts.length; i++) {
         const ch = "M" + parts.at(i).trim();
         if (ch.length < 8) continue;
-        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const p = document.createElementNS("http://w3.org", "path");
         p.setAttribute("d", ch);
+        p.setAttribute("pathLength", "100");
         grp.appendChild(p);
         const b = p.getBBox();
         const cx = (b.x + b.width * 0.5) * 0.1;
         const cy = 592 - (b.y + b.height * 0.5) * 0.1;
-        const len = Math.max(10, p.getTotalLength());
-        allSubs.push({ el: p, cx: cx, cy: cy, w: b.width * 0.1, h: b.height * 0.1, len: len });
+        allSubs.push({ el: p, cx: cx, cy: cy, w: b.width * 0.1, h: b.height * 0.1 });
       }
       orig.remove();
     });
 
-    // Сортируем все элементы по очереди прорисовки:
-    // 1. Земля (самый низ) -> 2. Человечек и глаз (центр) -> 3. Листья от головы наружу
     const ground = new Array(), human = new Array(), crown = new Array();
     allSubs.forEach(function(it) {
       if (it.w > 220 && it.cy > 415) {
@@ -66,48 +63,52 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
     });
     crown.sort(function(a, b) { return a.dist - b.dist; });
 
-    function resetAll(list, strokeCol, fillCol) {
+    function hideLayer(list, strokeCol, fillCol) {
       list.forEach(function(it) {
         it.el.style.transition = "none";
+        it.el.style.visibility = "hidden";
         it.el.style.stroke = strokeCol;
-        it.el.style.strokeWidth = "4.5";
+        it.el.style.strokeWidth = "5";
         it.el.style.strokeLinecap = "round";
         it.el.style.strokeLinejoin = "round";
         it.el.style.fill = fillCol;
         it.el.style.fillOpacity = "0";
-        it.el.style.strokeDasharray = it.len;
-        it.el.style.strokeDashoffset = it.len;
+        it.el.style.strokeDasharray = "100";
+        it.el.style.strokeDashoffset = "100";
       });
     }
 
-    function animateGroup(list, startSec, spanSec, durSec) {
+    function trimPathsIn(list, startSec, spanSec, durSec) {
       const n = Math.max(1, list.length);
       list.forEach(function(it, idx) {
         const delay = startSec + (idx / n) * spanSec;
         timers.push(setTimeout(function() {
-          it.el.style.transition = "stroke-dashoffset " + durSec + "s cubic-bezier(.25,.8,.25,1), fill-opacity .45s ease " + (durSec * 0.75).toFixed(2) + "s";
+          it.el.style.visibility = "visible";
+          void it.el.getBoundingClientRect();
+          it.el.style.transition = "stroke-dashoffset " + durSec + "s cubic-bezier(.22,.8,.36,1), fill-opacity " + (durSec * 0.85).toFixed(2) + "s ease " + (durSec * 0.15).toFixed(2) + "s";
           it.el.style.strokeDashoffset = "0";
           it.el.style.fillOpacity = "1";
         }, delay * 1000));
       });
     }
 
-    function playLineDraw() {
+    function playTrimPaths() {
       clearTimers();
-      // Сбрасываем ВСЁ в невидимое состояние до старта
-      resetAll(ground, "#b8c1d4", "#b8c1d4");
-      resetAll(human, "#ffffff", "#ffffff");
-      resetAll(crown, "#cfd6e6", "#d8dde8");
+      hideLayer(ground, "#b8c1d4", "#b8c1d4");
+      hideLayer(human, "#ffffff", "#ffffff");
+      hideLayer(crown, "#cfd6e6", "#d8dde8");
 
-      // Запускаем пошаговую прорисовку контуров
       setTimeout(function() {
-        animateGroup(ground, 0.05, 0.1, 1.0);
-        animateGroup(human, 0.85, 0.25, 1.35);
-        animateGroup(crown, 1.85, 2.2, 0.85);
+        // 1. Земля (0.05с)
+        trimPathsIn(ground, 0.05, 0.1, 1.1);
+        // 2. Человечек и глаз (0.85с)
+        trimPathsIn(human, 0.85, 0.2, 1.3);
+        // 3. Листья кроны волной от головы наружу (1.75с)
+        trimPathsIn(crown, 1.75, 2.3, 0.8);
       }, 40);
     }
 
-    document.getElementById("rpSc").onclick = playLineDraw;
-    playLineDraw();
+    document.getElementById("rpSc").onclick = playTrimPaths;
+    playTrimPaths();
   });
 };
