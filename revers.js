@@ -32,43 +32,89 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
     const origPaths = Array.from(grp.querySelectorAll("path"));
     const items = new Array();
 
+    // Превращаем относительные подпути ("z m dx dy") в абсолютные ("z M x y"), чтобы разрезать КАЖДЫЙ контур!
+    function splitSubPaths(dStr) {
+      const tokens = dStr.replace(/,/g, " ").trim().split(/\s+/);
+      const res = new Array();
+      let cur = new Array();
+      let cx = 0, cy = 0, sx = 0, sy = 0, cmd = "";
+      let i = 0;
+
+      function isCmd(t) { return t.length === 1 && ((t >= "A" && t <= "Z") || (t >= "a" && t <= "z")); }
+
+      while (i < tokens.length) {
+        let t = tokens.at(i);
+        if (isCmd(t)) { cmd = t; i++; }
+        if (cmd === "M" || cmd === "m") {
+          if (cur.length > 0) { res.push(cur.join(" ")); cur = new Array(); }
+          const x = parseFloat(tokens.at(i++)), y = parseFloat(tokens.at(i++));
+          cx = (cmd === "M") ? x : cx + x;
+          cy = (cmd === "M") ? y : cy + y;
+          sx = cx; sy = cy;
+          cur.push("M" + cx + " " + cy);
+          cmd = (cmd === "M") ? "L" : "l";
+        } else if (cmd === "L" || cmd === "l") {
+          const x = parseFloat(tokens.at(i++)), y = parseFloat(tokens.at(i++));
+          cx = (cmd === "L") ? x : cx + x;
+          cy = (cmd === "L") ? y : cy + y;
+          cur.push("L" + cx + " " + cy);
+        } else if (cmd === "C" || cmd === "c") {
+          const x1 = parseFloat(tokens.at(i++)), y1 = parseFloat(tokens.at(i++));
+          const x2 = parseFloat(tokens.at(i++)), y2 = parseFloat(tokens.at(i++));
+          const x = parseFloat(tokens.at(i++)), y = parseFloat(tokens.at(i++));
+          const ax1 = (cmd === "C") ? x1 : cx + x1, ay1 = (cmd === "C") ? y1 : cy + y1;
+          const ax2 = (cmd === "C") ? x2 : cx + x2, ay2 = (cmd === "C") ? y2 : cy + y2;
+          cx = (cmd === "C") ? x : cx + x;
+          cy = (cmd === "C") ? y : cy + y;
+          cur.push("C" + ax1 + " " + ay1 + " " + ax2 + " " + ay2 + " " + cx + " " + cy);
+        } else if (cmd === "Z" || cmd === "z") {
+          cx = sx; cy = sy;
+          cur.push("z");
+        } else {
+          i++;
+        }
+      }
+      if (cur.length > 0) res.push(cur.join(" "));
+      return res;
+    }
+
     origPaths.forEach(function(orig) {
-      const parts = (orig.getAttribute("d") || "").split("M");
-      for (let i = 1; i < parts.length; i++) {
-        const ch = "M" + parts.at(i).trim();
-        if (ch.length < 8) continue;
+      const subs = splitSubPaths(orig.getAttribute("d") || "");
+      subs.forEach(function(dSub) {
+        if (dSub.length < 10) return;
         const p = document.createElementNS("http://w3.org", "path");
-        p.setAttribute("d", ch);
-        p.setAttribute("pathLength", "100");
-        p.setAttribute("stroke-dasharray", "100");
-        p.setAttribute("stroke-dashoffset", "100");
-        p.setAttribute("stroke-width", "6");
-        p.setAttribute("stroke-linecap", "round");
-        p.setAttribute("stroke-linejoin", "round");
-        p.setAttribute("fill-opacity", "0");
+        p.setAttribute("d", dSub);
         grp.appendChild(p);
 
+        const len = Math.max(10, p.getTotalLength());
         const b = p.getBBox();
         const cx = (b.x + b.width * 0.5) * 0.1;
         const cy = 592 - (b.y + b.height * 0.5) * 0.1;
         const w = b.width * 0.1, h = b.height * 0.1;
 
-        let delay = 0, dur = 0.8, col = "#d8dde8";
+        p.setAttribute("stroke-dasharray", len.toFixed(1));
+        p.setAttribute("stroke-dashoffset", len.toFixed(1));
+        p.setAttribute("stroke-width", "6");
+        p.setAttribute("stroke-linecap", "round");
+        p.setAttribute("stroke-linejoin", "round");
+        p.setAttribute("fill-opacity", "0");
+
+        let delay = 0, dur = 0.85, col = "#d8dde8";
         if (w > 220 && cy > 415) {
-          delay = 0.05; dur = 1.0; col = "#b8c1d4"; // 1. Земля
+          delay = 0.05; dur = 1.05; col = "#b8c1d4"; // 1. Земля
         } else if ((h > 130 && cy > 230) || (w < 18 && h < 18 && Math.hypot(cx - 302, cy - 276) < 25)) {
-          delay = 0.85; dur = 1.2; col = "#ffffff"; // 2. Человечек и глаз
+          delay = 0.85; dur = 1.25; col = "#ffffff"; // 2. Человечек и глаз
         } else {
           const dist = Math.hypot(cx - 296, cy - 275);
-          delay = 1.7 + Math.min(2.4, dist / 95);    // 3. Листья от головы наружу
+          delay = 1.75 + Math.min(2.3, dist / 95);   // 3. Каждый листик кроны от головы наружу
           dur = 0.75;
           col = "#cfd6e6";
         }
 
         p.setAttribute("stroke", col);
         p.setAttribute("fill", col);
-        items.push({ el: p, delay: delay, dur: dur });
-      }
+        items.push({ el: p, len: len, delay: delay, dur: dur });
+      });
       orig.remove();
     });
 
@@ -83,13 +129,13 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
         for (let i = 0; i < items.length; i++) {
           const it = items.at(i);
           if (el <= it.delay) {
-            it.el.setAttribute("stroke-dashoffset", "100");
+            it.el.setAttribute("stroke-dashoffset", it.len.toFixed(1));
             it.el.setAttribute("fill-opacity", "0");
             active = true;
           } else {
             const p = Math.min(1, (el - it.delay) / it.dur);
             const ease = 1 - Math.pow(1 - p, 2.4);
-            it.el.setAttribute("stroke-dashoffset", (100 * (1 - ease)).toFixed(1));
+            it.el.setAttribute("stroke-dashoffset", (it.len * (1 - ease)).toFixed(1));
             it.el.setAttribute("fill-opacity", ease.toFixed(2));
             if (p < 1) active = true;
           }
