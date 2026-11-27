@@ -83,13 +83,15 @@
       const subElements = new Array();
       rawPaths.forEach(orig => {
         const dStr = orig.getAttribute("d") || "";
-        const chunks = dStr.match(/M[^M]+/gi) || new Array();
-        chunks.forEach(ch => {
+        const parts = dStr.split("M");
+        for (let i = 1; i < parts.length; i++) {
+          const ch = "M" + parts.at(i).trim();
+          if (ch.length < 10) continue;
           const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-          p.setAttribute("d", ch.trim());
+          p.setAttribute("d", ch);
           grp.appendChild(p);
           subElements.push(p);
-        });
+        }
         orig.remove();
       });
 
@@ -250,4 +252,3 @@
         const dx = l.cx - sx, dy = l.cy - sy, d = Math.hypot(dx, dy);
         let px = 0, py = 0;
         if (d < 60 && d > 0.1) { const f = (1 - d / 60) * 45; px = (dx / d) * f; py = -(dy / d) * f; }
-        l.vx = (l.vx + (wx + px - l.dx) * 0.14) * 0.76; l.vy = (l.vy + (wy + py - l.dy) * 0.14) * 0.76;
