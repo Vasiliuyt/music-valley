@@ -13,7 +13,6 @@
 
   let vox = 0, voy = 0, vsc = 1, drag = false, moved = false, lx = 0, ly = 0, act = null;
 
-  // Все 16 студийных альбомов «Сплина» (1994–2020) с полными треклистами
   const ALBUMS = new Array(
     { id: "dust", title: "Пыльная быль", year: "1994",
       desc: "Дебютный студийный альбом, записанный по ночам на студии Санкт-Петербургского театра «Буфф».",
@@ -125,13 +124,18 @@
       svgEl.style.overflow = "visible";
 
       const allPaths = Array.from(svgEl.querySelectorAll("path"));
-      if (allPaths.length > 1) {
-        allPaths.style.fill = "#b82328";
-        allPaths.style.pointerEvents = "none";
+      const shellPath = allPaths.shift();
+      if (shellPath) {
+        shellPath.style.fill = "#b82328";
+        shellPath.style.pointerEvents = "none";
       }
 
-      // Берём только настоящие крупные зёрна (исключаем микро-артефакт в самом конце)
-      const seedPaths = allPaths.slice(1, allPaths.length - 1);
+      // Отбираем только настоящие крупные зёрна (отсекаем микро-точки)
+      const seedPaths = allPaths.filter(p => {
+        const b = p.getBBox();
+        return b.width > 80 && b.height > 80;
+      });
+
       seedPaths.sort((p1, p2) => {
         const b1 = p1.getBBox(), b2 = p2.getBBox();
         return (b2.y - b1.y) * 0.6 + (b1.x - b2.x) * 0.4;
@@ -144,13 +148,14 @@
         p.style.transition = "fill 0.2s ease, filter 0.2s ease";
 
         if (idx % step === 0 && albIdx < ALBUMS.length) {
-          const alb = ALBUMS[albIdx++];
-          p.style.fill = "#e63238";
+          const alb = ALBUMS.at(albIdx);
+          albIdx++;
+          p.style.fill = "#eb363c";
           p.style.cursor = "pointer";
 
           p.addEventListener("mouseenter", () => {
-            p.style.fill = "#ff6b70";
-            p.style.filter = "drop-shadow(0 0 18px rgba(255, 80, 90, 0.9))";
+            p.style.fill = "#ff787d";
+            p.style.filter = "drop-shadow(0 0 22px rgba(255, 95, 105, 0.95))";
             tip.textContent = alb.title + " • " + alb.year;
             tip.style.display = "block";
           });
@@ -161,7 +166,7 @@
           });
 
           p.addEventListener("mouseleave", () => {
-            p.style.fill = "#e63238";
+            p.style.fill = "#eb363c";
             p.style.filter = "none";
             tip.style.display = "none";
           });
@@ -172,7 +177,7 @@
           });
         } else {
           p.style.fill = "#9e1c22";
-          p.addEventListener("mouseenter", () => { p.style.fill = "#bd242b"; });
+          p.addEventListener("mouseenter", () => { p.style.fill = "#c4252c"; });
           p.addEventListener("mouseleave", () => { p.style.fill = "#9e1c22"; });
         }
       });
