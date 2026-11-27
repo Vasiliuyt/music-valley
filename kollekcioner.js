@@ -5,16 +5,12 @@ window.launchKollekcionerScene = function(alb, albScene, stage, box, showAlb) {
   stage.style.opacity = "0"; stage.style.pointerEvents = "none";
   albScene.style.opacity = "1"; albScene.style.pointerEvents = "auto";
 
-  albScene.innerHTML = "<div style='position:fixed;top:20px;left:20px;z-index:115;display:flex;gap:8px;background:#121014;border:1px solid #2b2533;padding:8px 12px;border-radius:10px'><button id='bkGr' style='background:transparent;color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer'>← Назад к гранату</button><button id='rpSc' style='background:#231f2b;color:#ccc;border:none;padding:5px 9px;border-radius:6px;font-size:11px;cursor:pointer'>↻ Повторить выход</button><button id='inSc' style='background:#d4a359;color:#0b0a0d;border:none;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer'>Об альбоме (1996)</button></div>";
+  albScene.innerHTML = "<div style='position:fixed;top:20px;left:20px;z-index:115;display:flex;gap:8px;background:#121014;border:1px solid #2b2533;padding:8px 12px;border-radius:10px'><button id='bkGr' style='background:transparent;color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer'>← Назад к гранату</button><button id='inSc' style='background:#d4a359;color:#0b0a0d;border:none;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer'>Об альбоме (1996)</button></div>";
 
-  let timers = new Array(), rafId = 0, hoveredIdx = -1;
-  function clearTimers() {
-    while (timers.length > 0) clearTimeout(timers.pop());
-    cancelAnimationFrame(rafId);
-  }
+  let rafId = 0, hoveredIdx = -1;
 
   document.getElementById("bkGr").onclick = function() {
-    clearTimers();
+    cancelAnimationFrame(rafId);
     albScene.style.opacity = "0"; albScene.style.pointerEvents = "none";
     stage.style.opacity = "1"; stage.style.pointerEvents = "auto";
     box.style.display = "none"; if (tb) tb.style.display = "block";
@@ -22,10 +18,10 @@ window.launchKollekcionerScene = function(alb, albScene, stage, box, showAlb) {
   document.getElementById("inSc").onclick = function() { showAlb(alb, true); };
 
   const sWrap = document.createElement("div");
-  sWrap.style.cssText = "position:relative;width:min(86vh,86vw);height:min(86vh,86vw)";
+  sWrap.style.cssText = "position:relative;width:min(88vh,88vw);height:min(88vh,88vw)";
   albScene.appendChild(sWrap);
 
-  fetch("kollekcioner.svg?v=3").then(function(r) { return r.text(); }).then(function(txt) {
+  fetch("kollekcioner.svg?v=4").then(function(r) { return r.text(); }).then(function(txt) {
     sWrap.innerHTML = txt.slice(txt.indexOf("<svg"));
     const svg = sWrap.querySelector("svg");
     const grp = svg ? svg.querySelector("g") : null;
@@ -36,82 +32,68 @@ window.launchKollekcionerScene = function(alb, albScene, stage, box, showAlb) {
     const paths = Array.from(grp.querySelectorAll("path"));
     const palette = new Array("#e6dfd3", "#d4a359", "#c9bfa8", "#e0c389", "#b8ad96", "#d9b166", "#ded6c5", "#cfa663");
 
-    const dancers = paths.map(function(p) {
+    const walkers = paths.map(function(p) {
       const b = p.getBBox();
-      return { el: p, cx: b.x + b.width * 0.5, ready: false, baseCol: "#e6dfd3", phase: 0 };
+      return { el: p, cx: b.x + b.width * 0.5, baseCol: "#e6dfd3", phase: 0 };
     });
 
-    // Сортируем все 8 фигур строго слева направо
-    dancers.sort(function(a, b) { return a.cx - b.cx; });
+    walkers.sort(function(a, b) { return a.cx - b.cx; });
 
-    dancers.forEach(function(d, idx) {
+    walkers.forEach(function(w, idx) {
       const col = palette.at(idx % palette.length);
-      d.baseCol = col;
-      d.phase = idx * 0.85;
-      d.el.style.fill = col;
-      d.el.style.transformBox = "fill-box";
-      d.el.style.transformOrigin = "bottom center";
-      d.el.style.cursor = "pointer";
+      w.baseCol = col;
+      w.phase = idx * 0.85;
+      w.el.style.fill = col;
+      w.el.style.transformBox = "fill-box";
+      w.el.style.transformOrigin = "bottom center";
+      w.el.style.cursor = "pointer";
+      w.el.style.transition = "fill 0.2s ease, filter 0.2s ease";
 
-      d.el.onmouseenter = function() {
+      w.el.onmouseenter = function() {
         hoveredIdx = idx;
-        d.el.style.fill = "#ffd07b";
-        d.el.style.filter = "drop-shadow(0 0 22px rgba(242,184,92,0.85))";
+        w.el.style.fill = "#ffd07b";
+        w.el.style.filter = "drop-shadow(0 0 22px rgba(242,184,92,0.85))";
       };
-      d.el.onmouseleave = function() {
+      w.el.onmouseleave = function() {
         hoveredIdx = -1;
-        d.el.style.fill = d.baseCol;
-        d.el.style.filter = "none";
+        w.el.style.fill = w.baseCol;
+        w.el.style.filter = "none";
       };
-      d.el.onclick = function() { showAlb(alb, true); };
+      w.el.onclick = function() { showAlb(alb, true); };
     });
 
-    function startDanceLoop() {
-      const t0 = performance.now();
-      function loop(now) {
-        const t = (now - t0) / 1000;
-        for (let i = 0; i < dancers.length; i++) {
-          const d = dancers.at(i);
-          if (!d.ready) continue;
-          const isHov = (hoveredIdx === i);
-          const sway = Math.sin(t * 2.4 + d.phase) * 2.2;
-          const bob = Math.abs(Math.cos(t * 2.4 + d.phase)) * -35;
-          const lift = isHov ? -95 : bob;
-          const sc = isHov ? 1.05 : 1;
-          d.el.style.transform = "translateY(" + lift.toFixed(1) + "px) rotate(" + sway.toFixed(2) + "deg) scale(" + sc + ")";
-        }
-        rafId = requestAnimationFrame(loop);
+    const t0 = performance.now();
+    const span = 6800;
+
+    function walkLoop(now) {
+      const t = (now - t0) / 1000;
+      const march = (t * 420) % span;
+
+      for (let i = 0; i < walkers.length; i++) {
+        const w = walkers.at(i);
+        const isHov = (hoveredIdx === i);
+
+        // Непрерывный шаг слева направо с плавным переносом в начало колонны
+        let shiftX = march;
+        if (w.cx + shiftX > 6400) shiftX -= span;
+
+        // Физика шага: подпрыгивание на каждом шаге, наклон корпуса вперёд и пружина коленей
+        const stepCycle = t * 5.2 + w.phase;
+        const bounce = Math.abs(Math.sin(stepCycle)) * -85;
+        const lean = 4.5 + Math.sin(stepCycle * 2) * 2.8;
+        const squashY = 1 + Math.abs(Math.sin(stepCycle)) * 0.045;
+        const squashX = 1 - Math.abs(Math.sin(stepCycle)) * 0.025;
+        const sc = isHov ? 1.07 : 1;
+
+        w.el.style.transform =
+          "translate(" + shiftX.toFixed(1) + "px, " + (bounce + (isHov ? -50 : 0)).toFixed(1) + "px) " +
+          "rotate(" + lean.toFixed(2) + "deg) " +
+          "scale(" + (squashX * sc).toFixed(3) + ", " + (squashY * sc).toFixed(3) + ")";
       }
-      rafId = requestAnimationFrame(loop);
+
+      rafId = requestAnimationFrame(walkLoop);
     }
 
-    function playEntrance() {
-      clearTimers();
-      dancers.forEach(function(d) {
-        d.ready = false;
-        d.el.style.transition = "none";
-        d.el.style.opacity = "0";
-        d.el.style.transform = "translateY(260px) scale(0.92)";
-      });
-
-      setTimeout(function() {
-        dancers.forEach(function(d, idx) {
-          const delay = idx * 0.22;
-          timers.push(setTimeout(function() {
-            d.el.style.transition = "opacity 0.6s ease, transform 0.75s cubic-bezier(.22,1.25,.36,1), fill 0.2s ease, filter 0.2s ease";
-            d.el.style.opacity = "1";
-            d.el.style.transform = "translateY(0px) scale(1)";
-            timers.push(setTimeout(function() {
-              d.el.style.transition = "fill 0.2s ease, filter 0.2s ease";
-              d.ready = true;
-            }, 760));
-          }, delay * 1000));
-        });
-        startDanceLoop();
-      }, 40);
-    }
-
-    document.getElementById("rpSc").onclick = playEntrance;
-    playEntrance();
+    rafId = requestAnimationFrame(walkLoop);
   });
 };
