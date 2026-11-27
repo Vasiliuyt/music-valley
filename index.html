@@ -1,110 +1,171 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Музыкальная Долина v0.4</title>
+<title>Музыкальная Долина v0.5</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0b0d12;color:#e6e8ee;font-family:-apple-system,sans-serif;overflow:hidden;height:100vh}
-.top{position:fixed;top:16px;left:16px;z-index:10;background:rgba(16,20,28,.9);border:1px solid #252b3b;padding:14px;border-radius:12px;width:300px}
-.top h1{font-size:15px;margin-bottom:6px}
+body{background:#0b0d12;color:#e6e8ee;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow:hidden;height:100vh}
+.top{position:fixed;top:16px;left:16px;z-index:10;background:rgba(16,20,28,.92);backdrop-filter:blur(12px);border:1px solid #252b3b;padding:14px 16px;border-radius:14px;width:330px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.top h1{font-size:15px;margin-bottom:4px}
 .top p{font-size:12px;color:#8b94a5;margin-bottom:10px}
-.legend{display:flex;flex-wrap:wrap;gap:6px}
+.search{width:100%;background:#161b26;border:1px solid #2b3346;color:#fff;padding:7px 10px;border-radius:8px;font-size:12px;margin-bottom:10px;outline:none}
+.search:focus{border-color:#5c7cfa}
+.legend{display:flex;flex-wrap:wrap;gap:5px}
 .leg{font-size:11px;background:#181e2c;padding:4px 8px;border-radius:6px;display:flex;align-items:center;gap:5px}
 .dot{width:8px;height:8px;border-radius:50%}
-.tour{position:fixed;bottom:16px;left:16px;z-index:10;background:rgba(16,20,28,.9);border:1px solid #252b3b;padding:10px;border-radius:12px;display:flex;gap:8px;align-items:center}
+.tour{position:fixed;bottom:16px;left:16px;z-index:10;background:rgba(16,20,28,.92);backdrop-filter:blur(12px);border:1px solid #252b3b;padding:10px 12px;border-radius:12px;display:flex;gap:8px;align-items:center}
 button{background:#5c7cfa;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer}
 button.sec{background:#232a3b}
-.card{position:fixed;top:16px;right:16px;bottom:16px;width:360px;background:#11151f;border:1px solid #252b3b;border-radius:14px;padding:20px;z-index:20;display:none;flex-direction:column;gap:14px;overflow-y:auto}
+.card{position:fixed;top:16px;right:16px;bottom:16px;width:410px;max-width:calc(100vw - 32px);background:rgba(17,21,31,.96);backdrop-filter:blur(16px);border:1px solid #252b3b;border-radius:16px;padding:22px;z-index:20;display:none;flex-direction:column;gap:14px;overflow-y:auto;box-shadow:-10px 0 40px rgba(0,0,0,.6)}
 .card.open{display:flex}
-.c300{background:#181e2c;border-left:3px solid #5c7cfa;padding:10px;border-radius:6px;font-size:13px;line-height:1.45}
-.trk{background:#181e2c;padding:7px 10px;border-radius:6px;font-size:12px;margin-top:5px}
-.lnk{background:rgba(92,124,250,.15);padding:7px 10px;border-radius:6px;font-size:12px;margin-top:5px;cursor:pointer}
-.sp{background:#1db954;color:#000;text-align:center;padding:10px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;margin-top:auto}
+.badge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 8px;border-radius:5px;margin-bottom:4px}
+.c300{background:#181e2c;border-left:3px solid #5c7cfa;padding:11px 13px;border-radius:8px;font-size:13px;line-height:1.45;color:#dbe1ee}
+.sec-t{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#7c8599;font-weight:700;margin-bottom:6px}
+.fact-list{padding-left:16px;font-size:13px;line-height:1.5;color:#b8c0d0;display:flex;flex-direction:column;gap:6px}
+.trk{background:#181e2c;padding:8px 11px;border-radius:8px;font-size:12.5px;margin-top:5px;display:flex;justify-content:space-between;gap:8px}
+.trk span:last-child{color:#7c8599;font-size:11px;flex-shrink:0}
+.lnk{background:rgba(92,124,250,.12);border:1px solid rgba(92,124,250,.25);padding:8px 11px;border-radius:8px;font-size:12px;margin-top:5px;cursor:pointer}
+.lnk:hover{background:rgba(92,124,250,.22)}
+.sp{background:#1db954;color:#000;text-align:center;padding:11px;border-radius:10px;text-decoration:none;font-weight:700;font-size:13px;margin-top:auto}
 canvas{display:block;width:100vw;height:100vh}
 </style>
 </head>
 <body>
 <div class="top">
-  <h1>Музыкальная Долина v0.4</h1>
-  <p>Кликай на кружки, тяни карту, крути зум.</p>
+  <h1>Музыкальная Долина v0.5</h1>
+  <p>Хронология слева направо. Кликай на кружки, тяни карту, крути зум.</p>
+  <input id="q" class="search" placeholder="Поиск артиста...">
   <div class="legend" id="leg"></div>
 </div>
 <div class="tour">
-  <button id="tStart">▶ Маршрут: Чайковский → Бристоль</button>
+  <button id="tStart">▶ Маршрут: От Чайковского до Бристоля</button>
   <button id="tNext" class="sec" style="display:none">Дальше →</button>
   <span id="tInfo" style="font-size:12px;color:#8b94a5"></span>
 </div>
 <div class="card" id="card">
-  <div style="display:flex;justify-content:space-between;align-items:center">
-    <h2 id="cTitle" style="font-size:20px"></h2>
-    <button class="sec" onclick="document.getElementById('card').classList.remove('open')">✕</button>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+    <div>
+      <span class="badge" id="cBadge"></span>
+      <h2 id="cTitle" style="font-size:21px"></h2>
+    </div>
+    <button class="sec" onclick="document.getElementById('card').classList.remove('open');act=null">✕</button>
   </div>
   <div class="c300" id="c300"></div>
-  <div id="cStory" style="font-size:13px;line-height:1.5;color:#b8c0d0"></div>
-  <div><div style="font-size:11px;color:#7c8599;font-weight:700">ТРЕКИ</div><div id="cTrk"></div></div>
-  <div><div style="font-size:11px;color:#7c8599;font-weight:700">СВЯЗИ</div><div id="cLnk"></div></div>
+  <div><div class="sec-t">Проверенные факты</div><ul class="fact-list" id="cFacts"></ul></div>
+  <div><div class="sec-t">Точки входа (релизы)</div><div id="cTrk"></div></div>
+  <div><div class="sec-t">Ниточки связей</div><div id="cLnk"></div></div>
   <a id="cSp" href="#" target="_blank" class="sp">Открыть в Spotify ↗</a>
 </div>
 <canvas id="cv"></canvas>
+
+<script src="data.js"></script>
 <script>
-const SC={
-  c:{n:"Классика",col:"#fcc419"},
-  r:{n:"Корни 60-70х",col:"#ff922b"},
-  b:{n:"Бристоль 90х",col:"#5c7cfa"},
-  h:{n:"Хип-хоп / Альтернатива",col:"#20c997"}
+// Автоматическая раскладка слева направо по годам (хронология!)
+const sorted = [...NODES].sort((a,b) => a.year - b.year);
+const rowOffsets = [-120, 40, -40, 130, -180, 90];
+sorted.forEach((n, i) => {
+  n.r = 16;
+  n.x = -380 + i * 95;
+  n.y = rowOffsets[i % rowOffsets.length];
+});
+
+const M = {}; NODES.forEach(x => M[x.id] = x);
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+let W = cv.width = innerWidth, H = cv.height = innerHeight;
+let cx = W / 2, cy = H / 2, sc = 1, drag = null, pan = false, lx = 0, ly = 0, act = null, hov = null, query = "";
+
+onresize = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; };
+function hit(x, y) {
+  const wx = (x - cx) / sc, wy = (y - cy) / sc;
+  return NODES.find(n => (wx - n.x) ** 2 + (wy - n.y) ** 2 <= (n.r + 8) ** 2);
+}
+
+cv.onmousedown = e => {
+  const h = hit(e.clientX, e.clientY); lx = e.clientX; ly = e.clientY;
+  if (h) { drag = h; drag.m = false; } else pan = true;
 };
-const N=[
-  {id:"tch",n:"П. И. Чайковский",s:"c",r:15,x:-300,y:-120,c:"Воткинск, 1865 | Романтизм, балет, симфония. Пётр Ильич Чайковский (композитор — до 1893).",st:"В 1876 году написал балет «Лебединое озеро», откуда через 93 года бельгийская рок-группа возьмёт тему гобоя.",tr:["Лебединое озеро: Сцена (1876)"]},
-  {id:"wal",n:"The Wallace Collection",s:"r",r:13,x:-160,y:-50,c:"Брюссель, 1968 | Барокко-поп, психоделик-рок. Сильвен Ванхольме, Рэймонд Винсент и др.",st:"В 1969 году переложили тему из «Лебединого озера» на рок-ритм и записали хит «Daydream».",tr:["Daydream (1969)"]},
-  {id:"hay",n:"Айзек Хейз",s:"r",r:14,x:-30,y:20,c:"Ковингтон, 1964 | Соул, фанк, саундтрек. Айзек Ли Хейз-младший (вокал, клавишные — до 2008).",st:"В 1971 году замедлил мелодию «Daydream» в треке «Ike's Rap II» — эта пластинка стала главным сэмплом Бристоля.",tr:["Ike's Rap II (1971)"]},
-  {id:"por",n:"Portishead",s:"b",r:18,x:120,y:-80,c:"Бристоль, 1991 | Трип-хоп, даунтемпо. Бет Гиббонс (вокал), Джефф Бэрроу (биты), Адриан Атли (гитара).",st:"Взяв сэмпл у Айзека Хейза, записали нуарный хит «Glory Box» и определили лицо трип-хопа.",tr:["Glory Box (1994)","Sour Times (1994)","Roads (1994)"]},
-  {id:"tri",n:"Tricky",s:"b",r:16,x:130,y:100,c:"Бристоль, 1991 | Трип-хоп, экспериментальный хип-хоп. Эдриан Тоус (вокал, продакшн).",st:"Вышел из тусовки The Wild Bunch и Massive Attack. В «Hell Is Round the Corner» использовал тот же сэмпл Хейза.",tr:["Hell Is Round the Corner (1995)","Ponderosa (1995)"]},
-  {id:"mas",n:"Massive Attack",s:"b",r:20,x:270,y:0,c:"Бристоль, 1988 | Трип-хоп, даб, электроника. Роберт «3D» Дель Ная, Грант «Daddy G» Маршалл.",st:"Отцы бристольского звука и друзья Бэнкси. В 1998 году выпустили культовый альбом «Mezzanine».",tr:["Angel (1998)","Teardrop (1998)","Unfinished Sympathy (1991)"]},
-  {id:"bjo",n:"Björk",s:"b",r:16,x:280,y:150,c:"Рейкьявик, 1977 | Арт-поп, электроника, трип-хоп. Бьорк Гвюдмюндсдоттир.",st:"В середине 90-х работала в студии с Tricky и продюсером Massive Attack Нелли Хупером над альбомом «Post».",tr:["Possibly Maybe (1995)","Army of Me (1995)"]},
-  {id:"sha",n:"DJ Shadow",s:"h",r:16,x:410,y:-90,c:"Дэвис, 1991 | Инструментальный хип-хоп, трип-хоп. Джошуа Пол Дэвис (сэмплы, вертушки).",st:"Выпустил первый альбом «Endtroducing.....» (1996), на 100% собранный из сэмплов старого винила.",tr:["Building Steam with a Grain of Salt (1996)","The Number Song (1996)"]},
-  {id:"unk",n:"UNKLE",s:"h",r:15,x:520,y:10,c:"Лондон, 1992 | Трип-хоп, электроника, альтернатива. Джеймс Лавель (продакшн).",st:"Свёл в дебютном альбоме биты DJ Shadow и вокал Тома Йорка из Radiohead.",tr:["Rabbit in Your Headlights (1998)"]},
-  {id:"gor",n:"Gorillaz",s:"h",r:16,x:500,y:-170,c:"Лондон, 1998 | Альтернатива, трип-хоп, хип-хоп. Деймон Албарн, Джейми Хьюлетт.",st:"Дебютный альбом (2001) продюсировал Dan the Automator — коллега DJ Shadow по калифорнийской сцене.",tr:["Clint Eastwood (2001)"]}
-];
-const L=[
-  {a:"tch",b:"wal",t:"Лебединое озеро"},{a:"wal",b:"hay",t:"Daydream"},
-  {a:"hay",b:"por",t:"Сэмпл Glory Box"},{a:"hay",b:"tri",t:"Тот же сэмпл"},
-  {a:"mas",b:"por",t:"Бристоль 90-х"},{a:"mas",b:"tri",t:"The Wild Bunch"},
-  {a:"tri",b:"bjo",t:"Альбом Post"},{a:"mas",b:"bjo",t:"Нелли Хупер"},
-  {a:"sha",b:"unk",t:"Psyence Fiction"},{a:"mas",b:"sha",t:"Трип-хоп"},{a:"sha",b:"gor",t:"Dan the Automator"}
-];
-const M={};N.forEach(x=>M[x.id]=x);
-const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
-let W=cv.width=innerWidth,H=cv.height=innerHeight,cx=W/2,cy=H/2,sc=1,drag=null,pan=false,lx=0,ly=0,act=null;
-onresize=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight};
-function hit(x,y){const wx=(x-cx)/sc,wy=(y-cy)/sc;return N.find(n=>(wx-n.x)**2+(wy-n.y)**2<=(n.r+8)**2)}
-cv.onmousedown=e=>{const h=hit(e.clientX,e.clientY);lx=e.clientX;ly=e.clientY;if(h){drag=h;drag.m=false}else pan=true};
-onmousemove=e=>{if(drag){drag.x+=(e.clientX-lx)/sc;drag.y+=(e.clientY-ly)/sc;drag.m=true;lx=e.clientX;ly=e.clientY}else if(pan){cx+=e.clientX-lx;cy+=e.clientY-ly;lx=e.clientX;ly=e.clientY}};
-onmouseup=()=>{if(drag&&!drag.m)show(drag);drag=null;pan=false};
-cv.onwheel=e=>{e.preventDefault();const ns=Math.min(3,Math.max(.4,sc*(e.deltaY<0?1.1:.9)));const wx=(e.clientX-cx)/sc,wy=(e.clientY-cy)/sc;sc=ns;cx=e.clientX-wx*sc;cy=e.clientY-wy*sc};
-function loop(){
-  ctx.clearRect(0,0,W,H);
-  ctx.save();ctx.translate(cx,cy);ctx.scale(sc,sc);
-  L.forEach(l=>{const a=M[l.a],b=M[l.b],hi=act&&(act.id===a.id||act.id===b.id);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=hi?"#748ffc":"rgba(255,255,255,.2)";ctx.lineWidth=hi?2.5:1.5;ctx.stroke();ctx.fillStyle="#8b94a5";ctx.font="10px sans-serif";ctx.textAlign="center";ctx.fillText(l.t,(a.x+b.x)/2,(a.y+b.y)/2-4)});
-  N.forEach(n=>{const col=SC[n.s].col;ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,6.29);ctx.fillStyle=col;ctx.fill();ctx.fillStyle="#fff";ctx.font="bold 13px sans-serif";ctx.textAlign="left";ctx.fillText(n.n,n.x+n.r+8,n.y+4)});
-  ctx.restore();requestAnimationFrame(loop);
+onmousemove = e => {
+  if (drag) { drag.x += (e.clientX - lx) / sc; drag.y += (e.clientY - ly) / sc; drag.m = true; lx = e.clientX; ly = e.clientY; }
+  else if (pan) { cx += e.clientX - lx; cy += e.clientY - ly; lx = e.clientX; ly = e.clientY; }
+  else { hov = hit(e.clientX, e.clientY); cv.style.cursor = hov ? "pointer" : "grab"; }
+};
+onmouseup = () => { if (drag && !drag.m) show(drag); drag = null; pan = false; };
+cv.onwheel = e => {
+  e.preventDefault();
+  const ns = Math.min(3, Math.max(0.4, sc * (e.deltaY < 0 ? 1.1 : 0.9)));
+  const wx = (e.clientX - cx) / sc, wy = (e.clientY - cy) / sc;
+  sc = ns; cx = e.clientX - wx * sc; cy = e.clientY - wy * sc;
+};
+
+function loop() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc);
+  const foc = hov || act;
+
+  LINKS.forEach(l => {
+    const a = M[l.source], b = M[l.target];
+    if (!a || !b) return;
+    const hi = foc && (foc.id === a.id || foc.id === b.id);
+    const lCol = (LINK_TYPES[l.type] && LINK_TYPES[l.type].color) || "#748ffc";
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = hi ? lCol : "rgba(255,255,255,0.18)";
+    ctx.lineWidth = hi ? 2.8 : 1.5; ctx.stroke();
+    if (hi) {
+      ctx.fillStyle = lCol; ctx.font = "11px sans-serif"; ctx.textAlign = "center";
+      ctx.fillText(l.label, (a.x + b.x) / 2, (a.y + b.y) / 2 - 6);
+    }
+  });
+
+  NODES.forEach(n => {
+    const col = SCENES[n.scene].color;
+    const match = !query || n.name.toLowerCase().includes(query);
+    ctx.globalAlpha = match ? 1 : 0.2;
+    if (foc && foc.id === n.id) {
+      ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 7, 0, 6.29);
+      ctx.fillStyle = col + "33"; ctx.fill();
+    }
+    ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, 6.29);
+    ctx.fillStyle = col; ctx.fill();
+    ctx.fillStyle = "#8b94a5"; ctx.font = "10px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(n.year, n.x, n.y - n.r - 6);
+    ctx.fillStyle = "#fff"; ctx.font = "bold 13px sans-serif"; ctx.textAlign = "left";
+    ctx.fillText(n.name, n.x + n.r + 8, n.y + 4);
+  });
+
+  ctx.restore();
+  requestAnimationFrame(loop);
 }
 loop();
-function show(n){
-  act=n;document.getElementById("cTitle").textContent=n.n;document.getElementById("c300").textContent=n.c;document.getElementById("cStory").textContent=n.st;
-  document.getElementById("cTrk").innerHTML=n.tr.map(t=>`<div class="trk">${t}</div>`).join("");
-  document.getElementById("cLnk").innerHTML=L.filter(l=>l.a===n.id||l.b===n.id).map(l=>{const o=M[l.a===n.id?l.b:l.a];return`<div class="lnk" onclick="go('${o.id}')"><b>${o.n}</b> — ${l.t}</div>`}).join("");
-  document.getElementById("cSp").href="https://spotify.com"+encodeURIComponent(n.n);
+
+function show(n) {
+  act = n;
+  const scObj = SCENES[n.scene];
+  const b = document.getElementById("cBadge");
+  b.textContent = scObj.name + " • " + n.year;
+  b.style.background = scObj.color + "26"; b.style.color = scObj.color;
+  document.getElementById("cTitle").textContent = n.name;
+  document.getElementById("c300").textContent = n.card300;
+  document.getElementById("cFacts").innerHTML = (n.facts || []).map(f => `<li>${f}</li>`).join("");
+  document.getElementById("cTrk").innerHTML = (n.tracks || []).map(t => `<div class="trk"><span>${t.title}</span><span>${t.release}</span></div>`).join("");
+  document.getElementById("cLnk").innerHTML = LINKS.filter(l => l.source === n.id || l.target === n.id).map(l => {
+    const o = M[l.source === n.id ? l.target : l.source];
+    const lt = LINK_TYPES[l.type];
+    return `<div class="lnk" onclick="go('${o.id}')"><b style="color:${lt.color}">● ${o.name}</b> — ${l.label}</div>`;
+  }).join("");
+  document.getElementById("cSp").href = "https://open.spotify.com/search/" + encodeURIComponent(n.name);
   document.getElementById("card").classList.add("open");
 }
-window.go=id=>{const n=M[id];if(!n)return;show(n);sc=1.2;cx=W/2-n.x*sc-120;cy=H/2-n.y*sc};
-Object.values(SC).forEach(s=>{document.getElementById("leg").innerHTML+=`<div class="leg"><span class="dot" style="background:${s.col}"></span>${s.n}</div>`});
-let ti=-1;const ids=N.map(n=>n.id);
-document.getElementById("tStart").onclick=()=>{ti=0;document.getElementById("tNext").style.display="inline-block";go(ids[0]);document.getElementById("tInfo").textContent="1 / "+ids.length};
-document.getElementById("tNext").onclick=()=>{ti=(ti+1)%ids.length;go(ids[ti]);document.getElementById("tInfo").textContent=(ti+1)+" / "+ids.length};
+
+window.go = id => { const n = M[id]; if (!n) return; show(n); sc = 1.2; cx = W / 2 - n.x * sc - 150; cy = H / 2 - n.y * sc; };
+Object.values(SCENES).forEach(s => { document.getElementById("leg").innerHTML += `<div class="leg"><span class="dot" style="background:${s.color}"></span>${s.name}</div>`; });
+document.getElementById("q").oninput = e => { query = e.target.value.toLowerCase().trim(); };
+
+let ti = -1;
+document.getElementById("tStart").onclick = () => { ti = 0; document.getElementById("tNext").style.display = "inline-block"; go(TOUR_IDS); document.getElementById("tInfo").textContent = "1 / " + TOUR_IDS.length; };
+document.getElementById("tNext").onclick = () => { ti = (ti + 1) % TOUR_IDS.length; go(TOUR_IDS[ti]); document.getElementById("tInfo").textContent = (ti + 1) + " / " + TOUR_IDS.length; };
 </script>
 </body>
 </html>
-
-
