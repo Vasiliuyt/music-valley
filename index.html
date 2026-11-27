@@ -122,3 +122,7 @@ Object.entries(SCENES).forEach(([k,s])=>{const el=document.createElement("div");
 document.getElementById("q").oninput=e=>{q=e.target.value.toLowerCase().trim()};
 let ti=-1;
 document.getElementById("tStart").onclick=()=>{ti=0;document.getElementById("tNext").style.display="inline-block";go(TOUR_IDS);document.getElementById("tInfo").textContent="01 / "+TOUR_IDS.length};
+document.getElementById("tNext").onclick=()=>{ti=(ti+1)%TOUR_IDS.length;go(TOUR_IDS[ti]);document.getElementById("tInfo").textContent=String(ti+1).padStart(2,"0")+" / "+TOUR_IDS.length};
+</script>
+</body>
+</html>
