@@ -32,44 +32,57 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
     const origPaths = Array.from(grp.querySelectorAll("path"));
     const items = new Array();
 
-    // Превращаем относительные подпути ("z m dx dy") в абсолютные ("z M x y"), чтобы разрезать КАЖДЫЙ контур!
     function splitSubPaths(dStr) {
-      const tokens = dStr.replace(/,/g, " ").trim().split(/\s+/);
+      const tokens = dStr
+        .replace(/([A-Za-z])/g, " $1 ")
+        .replace(/-/g, " -")
+        .replace(/,/g, " ")
+        .trim()
+        .split(/\s+/);
+
       const res = new Array();
       let cur = new Array();
-      let cx = 0, cy = 0, sx = 0, sy = 0, cmd = "";
-      let i = 0;
-
-      function isCmd(t) { return t.length === 1 && ((t >= "A" && t <= "Z") || (t >= "a" && t <= "z")); }
+      let cx = 0, cy = 0, sx = 0, sy = 0, cmd = "", i = 0;
 
       while (i < tokens.length) {
-        let t = tokens.at(i);
-        if (isCmd(t)) { cmd = t; i++; }
+        const t = tokens.at(i);
+        if (t.length === 1 && ((t >= "A" && t <= "Z") || (t >= "a" && t <= "z"))) {
+          cmd = t;
+          i++;
+          if (cmd === "Z" || cmd === "z") {
+            cx = sx; cy = sy;
+            cur.push("z");
+          }
+          continue;
+        }
+        const n = parseFloat(t);
+        if (isNaN(n)) { i++; continue; }
+
         if (cmd === "M" || cmd === "m") {
           if (cur.length > 0) { res.push(cur.join(" ")); cur = new Array(); }
-          const x = parseFloat(tokens.at(i++)), y = parseFloat(tokens.at(i++));
+          const x = parseFloat(tokens.at(i)), y = parseFloat(tokens.at(i + 1));
+          i += 2;
           cx = (cmd === "M") ? x : cx + x;
           cy = (cmd === "M") ? y : cy + y;
           sx = cx; sy = cy;
           cur.push("M" + cx + " " + cy);
           cmd = (cmd === "M") ? "L" : "l";
         } else if (cmd === "L" || cmd === "l") {
-          const x = parseFloat(tokens.at(i++)), y = parseFloat(tokens.at(i++));
+          const x = parseFloat(tokens.at(i)), y = parseFloat(tokens.at(i + 1));
+          i += 2;
           cx = (cmd === "L") ? x : cx + x;
           cy = (cmd === "L") ? y : cy + y;
           cur.push("L" + cx + " " + cy);
         } else if (cmd === "C" || cmd === "c") {
-          const x1 = parseFloat(tokens.at(i++)), y1 = parseFloat(tokens.at(i++));
-          const x2 = parseFloat(tokens.at(i++)), y2 = parseFloat(tokens.at(i++));
-          const x = parseFloat(tokens.at(i++)), y = parseFloat(tokens.at(i++));
+          const x1 = parseFloat(tokens.at(i)), y1 = parseFloat(tokens.at(i + 1));
+          const x2 = parseFloat(tokens.at(i + 2)), y2 = parseFloat(tokens.at(i + 3));
+          const x = parseFloat(tokens.at(i + 4)), y = parseFloat(tokens.at(i + 5));
+          i += 6;
           const ax1 = (cmd === "C") ? x1 : cx + x1, ay1 = (cmd === "C") ? y1 : cy + y1;
           const ax2 = (cmd === "C") ? x2 : cx + x2, ay2 = (cmd === "C") ? y2 : cy + y2;
           cx = (cmd === "C") ? x : cx + x;
           cy = (cmd === "C") ? y : cy + y;
           cur.push("C" + ax1 + " " + ay1 + " " + ax2 + " " + ay2 + " " + cx + " " + cy);
-        } else if (cmd === "Z" || cmd === "z") {
-          cx = sx; cy = sy;
-          cur.push("z");
         } else {
           i++;
         }
@@ -101,12 +114,12 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
 
         let delay = 0, dur = 0.85, col = "#d8dde8";
         if (w > 220 && cy > 415) {
-          delay = 0.05; dur = 1.05; col = "#b8c1d4"; // 1. Земля
+          delay = 0.05; dur = 1.05; col = "#b8c1d4";
         } else if ((h > 130 && cy > 230) || (w < 18 && h < 18 && Math.hypot(cx - 302, cy - 276) < 25)) {
-          delay = 0.85; dur = 1.25; col = "#ffffff"; // 2. Человечек и глаз
+          delay = 0.85; dur = 1.25; col = "#ffffff";
         } else {
           const dist = Math.hypot(cx - 296, cy - 275);
-          delay = 1.75 + Math.min(2.3, dist / 95);   // 3. Каждый листик кроны от головы наружу
+          delay = 1.75 + Math.min(2.3, dist / 95);
           dur = 0.75;
           col = "#cfd6e6";
         }
