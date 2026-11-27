@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Музыкальная Долина — Интерактивный атлас связей</title>
+  <script src="https://d3js.org"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0b0d12;
+      color: #e6e8ee;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Верхняя панель */
+    .topbar {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(16, 20, 28, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 14px 18px;
+      border-radius: 14px;
+      max-width: 340px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .topbar h1 {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      color: #ffffff;
+    }
+    .topbar p {
+      font-size: 12px;
+      color: #8b94a5;
+      line-height: 1.4;
+    }
+    .search-box {
+      width: 100%;
+      background: #161b26;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+    }
+    .search-box:focus {
+      border-color: #6c8cff;
+    }
+
+    /* Легенда сцен */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: 0.2s;
+    }
+    .legend-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* Кнопка экскурсии внизу слева */
+    .tour-panel {
+      position: fixed;
+      bottom: 20px;
+      left: 16px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 20, 28, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 14px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .btn {
+      background: #232a3b;
+      color: #e6e8ee;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn:hover { background: #2f384f; }
+    .btn-primary {
+      background: #5c7cfa;
+      color: #fff;
+      border-color: #5c7cfa;
+    }
+    .btn-primary:hover { background: #4c6ef5; }
+
+    /* Правая карточка артиста */
+    .drawer {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      bottom: 16px;
+      width: 390px;
+      max-width: calc(100vw - 32px);
+      background: rgba(16, 20, 28, 0.94);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 22px;
+      z-index: 30;
+      transform: translateX(430px);
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      overflow-y: auto;
+      box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .drawer.open {
+      transform: translateX(0);
+    }
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .scene-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+    .drawer-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .close-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: #fff;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .close-btn:hover { background: rgba(255, 255, 255, 0.16); }
+
+    .card-300 {
+      background: rgba(255, 255, 255, 0.04);
+      border-left: 3px solid #5c7cfa;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      line-height: 1.5;
+      color: #d8dde8;
+    }
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #7c8599;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .story-text {
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: #b8c0d0;
+    }
+    .tracks-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .track-item {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .track-year {
+      color: #7c8599;
+      font-size: 11px;
+    }
+    .links-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .link-chip {
+      background: rgba(92, 124, 250, 0.1);
+      border: 1px solid rgba(92, 124, 250, 0.25);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .link-chip:hover {
+      background: rgba(92, 124, 250, 0.2);
+    }
+    .spotify-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #1db954;
+      color: #000;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 11px 16px;
+      border-radius: 10px;
+      text-decoration: none;
+      margin-top: auto;
+      transition: 0.2s;
+    }
+    .spotify-btn:hover { background: #1ed760; }
+
+    /* Граф SVG */
+    svg {
+      width: 100vw;
+      height: 100vh;
+      cursor: grab;
+    }
+    svg:active { cursor: grabbing; }
+    .link {
+      stroke: rgba(255, 255, 255, 0.16);
+      stroke-width: 1.8px;
+      transition: stroke 0.2s, stroke-width 0.2s;
+    }
+    .link.highlighted {
+      stroke: #748ffc;
+      stroke-width: 3px;
+    }
+    .link-label {
+      fill: #6c7589;
+      font-size: 10px;
+      pointer-events: none;
+      text-anchor: middle;
+    }
+    .node circle {
+      stroke: #0b0d12;
+      stroke-width: 2.5px;
+      cursor: pointer;
+      transition: r 0.2s, filter 0.2s;
+    }
+    .node:hover circle, .node.active circle {
+      filter: drop-shadow(0 0 12px currentColor);
+    }
+    .node text {
+      fill: #e6e8ee;
+      font-size: 12px;
+      font-weight: 600;
+      pointer-events: none;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Верхняя панель навигации -->
+  <div class="topbar">
+    <h1>Музыкальная Долина v0.1</h1>
+    <p>Кликай на узлы, тяни мышкой, крути зум. Ниточки показывают сэмплы, тусовки и влияние.</p>
+    <input type="text" id="searchInput" class="search-box" placeholder="Найти артиста (например, Portishead)..." />
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <!-- Панель маршрута-экскурсии -->
+  <div class="tour-panel">
+    <button class="btn btn-primary" id="startTourBtn">▶ Маршрут: От Чайковского до Бристоля</button>
+    <button class="btn" id="nextStepBtn" style="display:none;">Следующий шаг →</button>
+    <span id="tourStatus" style="font-size: 12px; color: #9aa3b5;"></span>
+  </div>
+
+  <!-- Боковая карточка артиста -->
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div>
+        <span class="scene-badge" id="drawerScene">Сцена</span>
+        <div class="drawer-title" id="drawerTitle">Название</div>
+      </div>
+      <button class="close-btn" id="closeDrawer">✕</button>
+    </div>
+
+    <div class="card-300" id="drawerCard300"></div>
+
+    <div>
+      <div class="section-title">История и место в связке</div>
+      <div class="story-text" id="drawerStory"></div>
+    </div>
+
+    <div>
+      <div class="section-title">Точки входа (главные треки)</div>
+      <div class="tracks-list" id="drawerTracks"></div>
+    </div>
+
+    <div>
+      <div class="section-title">Ниточки связей (нажми для перехода)</div>
+      <div class="links-list" id="drawerLinks"></div>
+    </div>
+
+    <a href="#" target="_blank" class="spotify-btn" id="spotifyLink">Открыть в Spotify ↗</a>
+  </div>
+
+  <svg id="graph"></svg>
+
+  <script>
+    // =========================================================================
+    // БАЗА ДАННЫХ ТВОЕЙ ДОЛИНЫ (Сюда мы будем просто дописывать новых артистов!)
+    // =========================================================================
+    const SCENES = {
+      classic: { name: "Академическая база", color: "#fcc419" },
+      roots:   { name: "Корни и сэмплы 60–70-х", color: "#ff922b" },
+      bristol: { name: "Бристоль и трип-хоп 90-х", color: "#5c7cfa" },
+      hiphop:  { name: "Инструментальный хип-хоп / Альтернатива", color: "#20c997" }
+    };
+
+    const NODES = [
+      {
+        id: "tchaikovsky",
+        name: "П. И. Чайковский",
+        scene: "classic",
+        radius: 15,
+        card300: "Воткинск, 1865 | Романтизм, классическая музыка, балет, симфония. Пётр Ильич Чайковский (композитор, дирижёр — до 1893).",
+        story: "Первоисточник главной мелодии бристольского трип-хопа: в 1876 году Чайковский написал балет «Лебединое озеро», откуда через 93 года бельгийская рок-группа заимствует тему гобоя и арфы.",
+        tracks: [
+          { title: "Лебединое озеро: Сцена (Акт II, № 10)", year: "1876" },
+          { title: "Струнный квартет № 1: Andante cantabile", year: "1871" }
+        ]
+      },
+      {
+        id: "wallace",
+        name: "The Wallace Collection",
