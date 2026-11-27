@@ -44,7 +44,11 @@ function showAlb(a, dark) {
 let leafItems = new Array(), sTick = 0, sWrap = null, timers = new Array();
 
 function openScene(alb) {
-  if (window.launchReversScene) window.launchReversScene(alb, albScene, stage, box, showAlb);
+  if (alb.svg === "kollekcioner.svg" && window.launchKollekcionerScene) {
+    window.launchKollekcionerScene(alb, albScene, stage, box, showAlb);
+  } else if (window.launchReversScene) {
+    window.launchReversScene(alb, albScene, stage, box, showAlb);
+  }
 }
 const wrap = document.createElement("div");
 wrap.style.cssText = "position:relative;width:min(82vh,82vw);height:min(82vh,82vw);transform-origin:center center";
