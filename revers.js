@@ -30,7 +30,7 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
     grp.removeAttribute("fill");
 
     const origPaths = Array.from(grp.querySelectorAll("path"));
-    const items = new Array();
+    const leafList = new Array();
 
     function tokenizePath(str) {
       const out = new Array();
@@ -54,7 +54,7 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
       return out;
     }
 
-    function splitSubPaths(dStr) {
+    function extractAllSubPaths(dStr) {
       const tokens = tokenizePath(dStr);
       const res = new Array();
       let cur = new Array();
@@ -71,7 +71,6 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
           }
           continue;
         }
-
         if (cmd === "M" || cmd === "m") {
           if (cur.length > 0) { res.push(cur.join(" ")); cur = new Array(); }
           const x = parseFloat(tokens.at(i)), y = parseFloat(tokens.at(i + 1));
@@ -108,45 +107,66 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
       return res;
     }
 
+    // 1. Вытаскиваем каждый отдельный листик и глаз изнутри монолита как самостоятельный вектор!
     origPaths.forEach(function(orig) {
-      const subs = splitSubPaths(orig.getAttribute("d") || "");
+      const subs = extractAllSubPaths(orig.getAttribute("d") || "");
       subs.forEach(function(dSub) {
         if (dSub.length < 10) return;
         const p = document.createElementNS("http://w3.org", "path");
         p.setAttribute("d", dSub);
         grp.appendChild(p);
-
-        const len = Math.max(10, p.getTotalLength());
         const b = p.getBBox();
+        const w = b.width * 0.1, h = b.height * 0.1;
+        // Пропускаем гигантский внешний каркас — оставляем все отдельные листья и глаз!
+        if (w > 250 || h > 250) {
+          p.remove();
+          return;
+        }
         const cx = (b.x + b.width * 0.5) * 0.1;
         const cy = 592 - (b.y + b.height * 0.5) * 0.1;
-        const w = b.width * 0.1, h = b.height * 0.1;
+        const len = Math.max(8, p.getTotalLength());
+        const isEye = (w < 16 && h < 16 && Math.hypot(cx - 302, cy - 276) < 25);
+        const dist = Math.hypot(cx - 296, cy - 275);
 
-        p.setAttribute("stroke-dasharray", len.toFixed(1));
-        p.setAttribute("stroke-dashoffset", len.toFixed(1));
+        p.setAttribute("stroke", isEye ? "#ffffff" : "#cfd6e6");
+        p.setAttribute("fill", isEye ? "#ffffff" : "#9aa4b8");
         p.setAttribute("stroke-width", "6");
         p.setAttribute("stroke-linecap", "round");
-        p.setAttribute("stroke-linejoin", "round");
+        p.setAttribute("stroke-dasharray", len.toFixed(1));
+        p.setAttribute("stroke-dashoffset", len.toFixed(1));
         p.setAttribute("fill-opacity", "0");
 
-        let delay = 0, dur = 0.85, col = "#d8dde8";
-        if (w > 220 && cy > 415) {
-          delay = 0.05; dur = 1.05; col = "#b8c1d4";
-        } else if ((h > 130 && cy > 230) || (w < 18 && h < 18 && Math.hypot(cx - 302, cy - 276) < 25)) {
-          delay = 0.85; dur = 1.25; col = "#ffffff";
-        } else {
-          const dist = Math.hypot(cx - 296, cy - 275);
-          delay = 1.75 + Math.min(2.3, dist / 95);
-          dur = 0.75;
-          col = "#cfd6e6";
-        }
-
-        p.setAttribute("stroke", col);
-        p.setAttribute("fill", col);
-        items.push({ el: p, len: len, delay: delay, dur: dur });
+        leafList.push({
+          el: p,
+          len: len,
+          delay: isEye ? 1.15 : (1.55 + Math.min(2.4, dist / 95)),
+          dur: isEye ? 0.5 : 0.75
+        });
       });
       orig.remove();
     });
+
+    // 2. Добавляем чистые векторные линии земли и силуэта ствола-человечка в том же масштабе (0..6000 x 0..5920)
+    function makeStemPath(dStr, col, sw, delay, dur) {
+      const p = document.createElementNS("http://w3.org", "path");
+      p.setAttribute("d", dStr);
+      p.setAttribute("fill", "none");
+      p.setAttribute("stroke", col);
+      p.setAttribute("stroke-width", sw);
+      p.setAttribute("stroke-linecap", "round");
+      p.setAttribute("stroke-linejoin", "round");
+      grp.insertBefore(p, grp.firstChild);
+      const len = Math.max(20, p.getTotalLength());
+      p.setAttribute("stroke-dasharray", len.toFixed(1));
+      p.setAttribute("stroke-dashoffset", len.toFixed(1));
+      leafList.push({ el: p, len: len, delay: delay, dur: dur, isLine: true });
+    }
+
+    // Дуга земли (прорисовывается первой)
+    makeStemPath("M480 780 Q2960 1580 5480 820", "#b8c1d4", "34", 0.05, 1.05);
+    // Контур человечка снизу вверх (левая и правая линии тела)
+    makeStemPath("M2820 1240 L2820 2580 Q2820 2980 2960 3180", "#ffffff", "32", 0.75, 1.0);
+    makeStemPath("M3110 1240 L3110 2580 Q3110 2980 2960 3180", "#ffffff", "32", 0.75, 1.0);
 
     function playFrames() {
       cancelAnimationFrame(rafId);
@@ -156,17 +176,17 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
         const el = (now - t0) / 1000;
         let active = false;
 
-        for (let i = 0; i < items.length; i++) {
-          const it = items.at(i);
+        for (let i = 0; i < leafList.length; i++) {
+          const it = leafList.at(i);
           if (el <= it.delay) {
             it.el.setAttribute("stroke-dashoffset", it.len.toFixed(1));
-            it.el.setAttribute("fill-opacity", "0");
+            if (!it.isLine) it.el.setAttribute("fill-opacity", "0");
             active = true;
           } else {
             const p = Math.min(1, (el - it.delay) / it.dur);
             const ease = 1 - Math.pow(1 - p, 2.4);
             it.el.setAttribute("stroke-dashoffset", (it.len * (1 - ease)).toFixed(1));
-            it.el.setAttribute("fill-opacity", ease.toFixed(2));
+            if (!it.isLine) it.el.setAttribute("fill-opacity", ease.toFixed(2));
             if (p < 1) active = true;
           }
         }
