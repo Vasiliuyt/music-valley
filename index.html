@@ -34,6 +34,7 @@ body{background:#08090c;color:#d6d8de;font-family:-apple-system,BlinkMacSystemFo
 <script src="data.js"></script>
 <script src="revers.js?v=2"></script>
 <script src="kollekcioner.js?v=8"></script>
+<script src="collage.js?v=1"></script>
 <script src="vinyl.js"></script>
 <script>
 const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
@@ -73,6 +74,14 @@ document.getElementById("backBtn").onclick=()=>{
   document.getElementById("mainSub").style.display="block";
   document.getElementById("backBtn").style.display="none";
 };
+</script>
+<script src="collage.js?v=1"></script>
+<script>
+  const colBtn = document.createElement("button");
+  colBtn.textContent = "🎨 Единая картина «Сплин»";
+  colBtn.style.cssText = "position:fixed;bottom:20px;left:20px;z-index:115;background:#181418;color:#fff;border:1px solid rgba(255,255,255,0.2);padding:10px 15px;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.6)";
+  colBtn.onclick = function() { if (window.openSplinCollage) window.openSplinCollage(); };
+  document.body.appendChild(colBtn);
 </script>
 </body>
 </html>
