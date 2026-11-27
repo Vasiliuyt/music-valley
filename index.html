@@ -3,126 +3,100 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Музыкальная Долина — Архив</title>
+<title>Музыкальная Долина — Санкт-Петербург</title>
+<link rel="stylesheet" href="https://unpkg.com" />
+<script src="https://unpkg.com"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#090a0d;color:#d6d8de;font-family:-apple-system,sans-serif;overflow:hidden;height:100vh}
-.top{position:fixed;top:20px;left:20px;z-index:10;background:rgba(13,15,20,.9);border:1px solid rgba(255,255,255,.08);padding:16px;border-radius:12px;width:320px}
+body{background:#090a0d;color:#d6d8de;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow:hidden;height:100vh}
+.top{position:fixed;top:20px;left:20px;z-index:1000;background:rgba(13,15,20,.92);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.09);padding:16px 18px;border-radius:12px;width:320px}
 .kicker{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#6c7280;margin-bottom:4px}
-.top h1{font-size:17px;color:#fff;margin-bottom:10px}
-.search{width:100%;background:#111319;border:1px solid rgba(255,255,255,.1);color:#fff;padding:8px 10px;border-radius:7px;font-size:12px;margin-bottom:10px;outline:none}
-.legend{display:flex;flex-wrap:wrap;gap:6px}
-.leg{font-size:11px;color:#9da3b0;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);padding:4px 8px;border-radius:5px;display:flex;align-items:center;gap:5px;cursor:pointer}
-.leg.active{background:rgba(255,255,255,.12);color:#fff}
-.dot{width:6px;height:6px;border-radius:50%}
-.tour{position:fixed;bottom:20px;left:20px;z-index:10;background:rgba(13,15,20,.9);border:1px solid rgba(255,255,255,.08);padding:9px 12px;border-radius:10px;display:flex;gap:8px;align-items:center}
-button{background:#e6e8ee;color:#090a0d;border:none;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
-button.sec{background:rgba(255,255,255,.07);color:#c4c8d4}
-.card{position:fixed;top:20px;right:20px;bottom:20px;width:400px;max-width:calc(100vw - 40px);background:rgba(13,15,20,.97);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:22px;z-index:20;display:none;flex-direction:column;gap:14px;overflow-y:auto}
-.card.open{display:flex}
-.badge{display:inline-block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;border-radius:4px;margin-bottom:6px;border:1px solid rgba(255,255,255,.12)}
-.c300{background:rgba(255,255,255,.03);border-left:2px solid #8c96ab;padding:11px 13px;border-radius:4px;font-size:13px;line-height:1.45;color:#cfd4e0}
-.sec-t{font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:#666c7a;font-weight:600;margin-bottom:6px}
-.fact-list{padding-left:15px;font-size:13px;line-height:1.5;color:#aeb4c2;display:flex;flex-direction:column;gap:7px}
-.trk{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);padding:8px 11px;border-radius:6px;font-size:12.5px;margin-top:5px;display:flex;justify-content:space-between;gap:8px}
-.trk span:last-child{color:#6c7280;font-size:11px;flex-shrink:0}
-.lnk{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:8px 11px;border-radius:6px;font-size:12px;margin-top:5px;cursor:pointer}
-.sp{background:#181b22;color:#e6e8ee;border:1px solid rgba(255,255,255,.15);text-align:center;padding:10px;border-radius:8px;text-decoration:none;font-weight:600;font-size:12.5px;margin-top:auto}
-canvas{display:block;width:100vw;height:100vh}
+.top h1{font-size:17px;color:#fff;margin-bottom:6px}
+.top p{font-size:12px;color:#8b94a5;line-height:1.4}
+.back-btn{display:none;margin-top:12px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.14);padding:7px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer}
+.back-btn:hover{background:rgba(255,255,255,.15)}
+#cv{display:block;width:100vw;height:100vh}
+#mapView{position:fixed;inset:0;z-index:500;opacity:0;pointer-events:none;transition:opacity .45s ease;background:#090a0d}
+#mapView.active{opacity:1;pointer-events:auto}
+.leaflet-container{background:#090a0d !important}
+.leaflet-control-attribution{display:none !important}
 </style>
 </head>
 <body>
 <div class="top">
-  <div class="kicker">Audio Archive • v0.7</div>
-  <h1>Музыкальная Долина</h1>
-  <input id="q" class="search" placeholder="Поиск по архиву...">
-  <div class="legend" id="leg"></div>
-</div>
-<div class="tour">
-  <button id="tStart">▶ Маршрут: Чайковский → Бристоль</button>
-  <button id="tNext" class="sec" style="display:none">Далее →</button>
-  <span id="tInfo" style="font-size:11px;color:#6c7280"></span>
-</div>
-<div class="card" id="card">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-    <div><span class="badge" id="cBadge"></span><h2 id="cTitle" style="font-size:21px;color:#fff"></h2></div>
-    <button class="sec" onclick="document.getElementById('card').classList.remove('open');act=null">✕</button>
-  </div>
-  <div class="c300" id="c300"></div>
-  <div><div class="sec-t">Документальные факты</div><ul class="fact-list" id="cFacts"></ul></div>
-  <div><div class="sec-t">Ключевые записи</div><div id="cTrk"></div></div>
-  <div><div class="sec-t">Связи в архиве</div><div id="cLnk"></div></div>
-  <a id="cSp" href="#" target="_blank" class="sp">Слушать в Spotify ↗</a>
+  <div class="kicker" id="kicker">Audio Atlas • Сцены</div>
+  <h1 id="mainTitle">Музыкальная Долина</h1>
+  <p id="mainSub">Нажми на «Санкт-Петербург», чтобы открыть интерактивную карту города.</p>
+  <button class="back-btn" id="backBtn">← Назад к общей схеме</button>
 </div>
 <canvas id="cv"></canvas>
+<div id="mapView"></div>
 <script src="data.js"></script>
 <script>
-const PAL={classic:"#c4a35a",roots:"#b87a56",bristol:"#7b8eb8",hiphop:"#6fa396"};
-const sorted=[...NODES].sort((a,b)=>a.year-b.year);
-const lanes=[-160,-55,50,155,-105,105];
-sorted.forEach((n,i)=>{n.x=-420+i*125;n.y=lanes[i%lanes.length];n.w=Math.max(120,n.name.length*8.2+34);n.h=34});
-const M={};NODES.forEach(x=>M[x.id]=x);
-LINKS.forEach(l=>l.prog=0);
 const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
-let W=cv.width=innerWidth,H=cv.height=innerHeight,cx=W/2,cy=H/2,sc=1,drag=null,pan=false,lx=0,ly=0,act=null,hov=null,q="",fs=null;
+let W=cv.width=innerWidth,H=cv.height=innerHeight,cx=W/2,cy=H/2,sc=1,hov=null;
 onresize=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight};
-function hit(x,y){const wx=(x-cx)/sc,wy=(y-cy)/sc;return NODES.find(n=>Math.abs(wx-n.x)<=n.w/2&&Math.abs(wy-n.y)<=n.h/2)}
-cv.onmousedown=e=>{const h=hit(e.clientX,e.clientY);lx=e.clientX;ly=e.clientY;if(h){drag=h;drag.m=false}else pan=true};
-onmousemove=e=>{if(drag){drag.x+=(e.clientX-lx)/sc;drag.y+=(e.clientY-ly)/sc;drag.m=true;lx=e.clientX;ly=e.clientY}else if(pan){cx+=e.clientX-lx;cy+=e.clientY-ly;lx=e.clientX;ly=e.clientY}else{hov=hit(e.clientX,e.clientY);cv.style.cursor=hov?"pointer":"grab"}};
-onmouseup=()=>{if(drag&&!drag.m)show(drag);drag=null;pan=false};
-cv.onwheel=e=>{e.preventDefault();const ns=Math.min(2.6,Math.max(.4,sc*(e.deltaY<0?1.1:.9)));const wx=(e.clientX-cx)/sc,wy=(e.clientY-cy)/sc;sc=ns;cx=e.clientX-wx*sc;cy=e.clientY-wy*sc};
-function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath()}
-function bez(p0,p1,p2,p3,t){const u=1-t;return u*u*u*p0+3*u*u*t*p1+3*u*t*t*p2+t*t*t*p3}
+
+NODES.forEach((n,i)=>{n.x=0;n.y=i*80;n.w=220;n.h=46});
+
+function hit(x,y){
+  const wx=(x-cx)/sc,wy=(y-cy)/sc;
+  return NODES.find(n=>Math.abs(wx-n.x)<=n.w/2&&Math.abs(wy-n.y)<=n.h/2);
+}
+
+cv.onmousemove=e=>{hov=hit(e.clientX,e.clientY);cv.style.cursor=hov?"pointer":"default"};
+cv.onclick=e=>{const h=hit(e.clientX,e.clientY);if(h)openCityMap(h)};
+
+function rr(x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
 function loop(){
-  ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(cx,cy);ctx.scale(sc,sc);const foc=hov||act;
-  LINKS.forEach(l=>{
-    const a=M[l.source],b=M[l.target];if(!a||!b)return;
-    const isFrom=foc&&foc.id===a.id,isTo=foc&&foc.id===b.id,hi=isFrom||isTo;
-    l.prog+=((hi?1:0)-l.prog)*0.09;
-    const mx=(a.x+b.x)/2;
-    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.bezierCurveTo(mx,a.y,mx,b.y,b.x,b.y);
-    ctx.strokeStyle="rgba(255,255,255,.045)";ctx.lineWidth=1;ctx.stroke();
-    if(l.prog>0.01){
-      const col=PAL[foc?foc.scene:a.scene]||"#7b8eb8";
-      ctx.beginPath();
-      const steps=28,maxS=Math.ceil(steps*l.prog);
-      for(let i=0;i<=maxS;i++){
-        const raw=Math.min(l.prog,i/steps),t=isTo?1-raw:raw;
-        const px=bez(a.x,mx,mx,b.x,t),py=bez(a.y,a.y,b.y,b.y,t);
-        i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
-      }
-      ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
-      if(l.prog>0.75){ctx.globalAlpha=(l.prog-0.75)*4;ctx.fillStyle="#d6d8de";ctx.font="10.5px sans-serif";ctx.textAlign="center";ctx.fillText(l.label,mx,(a.y+b.y)/2-8);ctx.globalAlpha=1}
-    }
-  });
+  ctx.clearRect(0,0,W,H);
+  ctx.save();ctx.translate(cx,cy);ctx.scale(sc,sc);
   NODES.forEach(n=>{
-    const col=PAL[n.scene]||"#8c96ab",ok=(!q||n.name.toLowerCase().includes(q))&&(!fs||n.scene===fs);
-    const isLinked=foc&&(foc.id===n.id||LINKS.some(l=>(l.source===foc.id&&l.target===n.id)||(l.target===foc.id&&l.source===n.id)));
-    const sel=foc&&foc.id===n.id,rx=n.x-n.w/2,ry=n.y-n.h/2;
-    ctx.globalAlpha=ok?(foc?(isLinked?1:.35):1):.15;
-    rr(rx,ry,n.w,n.h,7);ctx.fillStyle=sel?"#1b1f2b":"#11131a";ctx.fill();
-    ctx.lineWidth=isLinked?1.5:1;ctx.strokeStyle=isLinked?col:"rgba(255,255,255,.1)";ctx.stroke();
-    ctx.beginPath();ctx.arc(rx+13,n.y,3.5,0,6.29);ctx.fillStyle=col;ctx.fill();
-    ctx.fillStyle="#5c6270";ctx.font="9.5px sans-serif";ctx.textAlign="left";ctx.fillText(n.year,rx+2,ry-5);
-    ctx.fillStyle=isLinked?"#fff":"#cfd4e0";ctx.font="500 12.5px sans-serif";ctx.fillText(n.name,rx+23,n.y+4);
+    const isH=hov&&hov.id===n.id,rx=n.x-n.w/2,ry=n.y-n.h/2;
+    if(isH){
+      ctx.beginPath();ctx.arc(n.x,n.y,90,0,6.29);
+      ctx.fillStyle="rgba(123,142,184,0.06)";ctx.fill();
+    }
+    rr(rx,ry,n.w,n.h,9);
+    ctx.fillStyle=isH?"#1a1e29":"#11131a";ctx.fill();
+    ctx.lineWidth=isH?1.6:1;ctx.strokeStyle=isH?"#7b8eb8":"rgba(255,255,255,0.14)";ctx.stroke();
+    ctx.beginPath();ctx.arc(rx+16,n.y,4,0,6.29);ctx.fillStyle="#7b8eb8";ctx.fill();
+    ctx.fillStyle="#6c7280";ctx.font="10px sans-serif";ctx.textAlign="left";ctx.fillText(n.year,rx+2,ry-6);
+    ctx.fillStyle="#fff";ctx.font="600 14px sans-serif";ctx.fillText(n.name,rx+28,n.y+5);
   });
   ctx.restore();requestAnimationFrame(loop);
 }
 loop();
-function show(n){
-  act=n;const s=SCENES[n.scene],col=PAL[n.scene]||"#8c96ab",b=document.getElementById("cBadge");b.textContent=s.name+" • "+n.year;b.style.color=col;b.style.borderColor=col+"55";
-  document.getElementById("cTitle").textContent=n.name;document.getElementById("c300").textContent=n.card300;document.getElementById("c300").style.borderLeftColor=col;
-  document.getElementById("cFacts").innerHTML=(n.facts||[]).map(f=>`<li>${f}</li>`).join("");
-  document.getElementById("cTrk").innerHTML=(n.tracks||[]).map(t=>`<div class="trk"><span>${t.title}</span><span>${t.release}</span></div>`).join("");
-  document.getElementById("cLnk").innerHTML=LINKS.filter(l=>l.source===n.id||l.target===n.id).map(l=>{const o=M[l.source===n.id?l.target:l.source];return`<div class="lnk" onclick="go('${o.id}')"><b style="color:#fff">${o.name}</b> <span style="color:#7c8291">— ${l.label}</span></div>`}).join("");
-  document.getElementById("cSp").href="https://spotify.com"+encodeURIComponent(n.name);document.getElementById("card").classList.add("open");
+
+let map=null;
+function openCityMap(city){
+  document.getElementById("mapView").classList.add("active");
+  document.getElementById("kicker").textContent="Карта сцены • "+city.year;
+  document.getElementById("mainTitle").textContent=city.name;
+  document.getElementById("mainSub").textContent=city.subtitle;
+  document.getElementById("backBtn").style.display="inline-block";
+
+  if(!map){
+    map=L.map("mapView",{zoomControl:false}).setView(city.mapCenter,city.mapZoom);
+    L.tileLayer("https://{s}://{z}/{x}/{y}{r}.png",{maxZoom:19}).addTo(map);
+    L.control.zoom({position:"bottomright"}).addTo(map);
+  }else{
+    setTimeout(()=>map.invalidateSize(),200);
+  }
 }
-window.go=id=>{const n=M[id];if(!n)return;show(n);sc=1.15;cx=W/2-n.x*sc-160;cy=H/2-n.y*sc};
-Object.entries(SCENES).forEach(([k,s])=>{const el=document.createElement("div");el.className="leg";el.innerHTML=`<span class="dot" style="background:${PAL[k]}"></span>${s.name}`;el.onclick=()=>{fs=fs===k?null:k;document.querySelectorAll(".leg").forEach(x=>x.classList.remove("active"));if(fs)el.classList.add("active")};document.getElementById("leg").appendChild(el)});
-document.getElementById("q").oninput=e=>{q=e.target.value.toLowerCase().trim()};
-let ti=-1;
-document.getElementById("tStart").onclick=()=>{ti=0;document.getElementById("tNext").style.display="inline-block";go(TOUR_IDS);document.getElementById("tInfo").textContent="01 / "+TOUR_IDS.length};
-document.getElementById("tNext").onclick=()=>{ti=(ti+1)%TOUR_IDS.length;go(TOUR_IDS[ti]);document.getElementById("tInfo").textContent=String(ti+1).padStart(2,"0")+" / "+TOUR_IDS.length};
+
+document.getElementById("backBtn").onclick=()=>{
+  document.getElementById("mapView").classList.remove("active");
+  document.getElementById("kicker").textContent="Audio Atlas • Сцены";
+  document.getElementById("mainTitle").textContent="Музыкальная Долина";
+  document.getElementById("mainSub").textContent="Нажми на «Санкт-Петербург», чтобы открыть интерактивную карту города.";
+  document.getElementById("backBtn").style.display="none";
+};
 </script>
 </body>
 </html>
