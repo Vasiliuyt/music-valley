@@ -3,12 +3,22 @@
   const oldCv = document.getElementById("vinylCv");
   if (oldCv) oldCv.style.display = "none";
 
+  // 1. ЭКРАН ГРАНАТА (Сцена «Сплин»)
   let stage = document.getElementById("granatStage");
   if (!stage) {
     stage = document.createElement("div");
     stage.id = "granatStage";
-    stage.style.cssText = "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:grab;background:#080607";
+    stage.style.cssText = "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:grab;background:#080607;transition:opacity 0.55s ease, transform 0.55s ease";
     host.appendChild(stage);
+  }
+
+  // 2. ОТДЕЛЬНОЕ ОКНО СЦЕНЫ АЛЬБОМА (например, «Реверсивная хроника событий»)
+  let albScene = document.getElementById("albumSceneView");
+  if (!albScene) {
+    albScene = document.createElement("div");
+    albScene.id = "albumSceneView";
+    albScene.style.cssText = "position:fixed;inset:0;z-index:90;opacity:0;pointer-events:none;transition:opacity 0.6s ease;background:radial-gradient(circle at 50% 45%,#15171c 0%,#08090c 82%);display:flex;align-items:center;justify-content:center;overflow:hidden";
+    host.appendChild(albScene);
   }
 
   let vox = 0, voy = 0, vsc = 1, drag = false, moved = false, lx = 0, ly = 0, act = null;
@@ -66,7 +76,8 @@
     },
     {
       id: "rev", title: "Реверсивная хроника событий", year: "2004",
-      entry: "«Романс» • «Мы сидели и курили»",
+      svgFile: "revers.svg",
+      entry: "«Романс» • «Мы сидели и курили» • «Шато Марго»",
       story: "Минималистичный, почти камерный альбом-дневник. Именно здесь вышел культовый акустический «Романс», ставший визитной карточкой Васильева.",
       links: "Связи: Русский городской романс • Акустический минимализм",
       tracks: new Array("Океан","Семь восьмых","Шато Марго","Мы сидели и курили","Сиануквиль","Человек и дерево","Бериллий","Тем, кто раньше нас","Паровоз","Урок географии","Романс","Люди на холме","Голос за кадром")
@@ -122,31 +133,29 @@
     },
     {
       id: "vir", title: "Вира и майна", year: "2020",
-      entry: "«Передайте это Гарри Поттеру...» • «За семью печатями»",
-      story: "Пластинка эпохи локдауна: смесь ироничных притч, тяжеловесного блюз-рока и зрелой питерской меланхолии.",
-      links: "Связи: Блюз-рок • Современная питерская сцена",
-      tracks: new Array("Передайте это Гарри Поттеру, если вдруг его встретите","Кесарь","За семью печатями","Вира и майна","Призрак","Кофе","Джин","Воздушный шар","Фокусник","Гарри","Атом")
-    }
-  );
   let box = document.getElementById("albBox");
   if (!box) {
     box = document.createElement("div");
     box.id = "albBox";
-    box.style.cssText = "position:fixed;top:20px;right:20px;bottom:20px;width:390px;max-width:calc(100vw - 40px);background:#120b0d;border:1px solid #381820;border-radius:12px;padding:22px;z-index:120;display:none;flex-direction:column;gap:13px;color:#ede6e8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow-y:auto;box-shadow:-16px 0 50px rgba(0,0,0,0.85)";
+    box.style.cssText = "position:fixed;top:20px;right:20px;bottom:20px;width:390px;max-width:calc(100vw - 40px);background:#120b0d;border:1px solid #381820;border-radius:12px;padding:22px;z-index:130;display:none;flex-direction:column;gap:13px;color:#ede6e8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow-y:auto;box-shadow:-16px 0 50px rgba(0,0,0,0.85)";
     document.body.appendChild(box);
   }
 
-  function showAlb(a) {
+  function showAlb(a, isDarkTheme) {
     act = a;
     box.style.display = "flex";
+    const accent = isDarkTheme ? "#8fa3c7" : "#e02e31";
+    box.style.background = isDarkTheme ? "#101216" : "#120b0d";
+    box.style.borderColor = isDarkTheme ? "#262b36" : "#381820";
+
     const q = encodeURIComponent("Сплин " + a.title);
     const yaUrl = "https://yandex.ru" + q;
     const vkUrl = "https://vk.com" + q;
     const ytUrl = "https://youtube.com" + encodeURIComponent("Сплин " + a.title + " клип live");
 
     const trs = a.tracks.map((x, idx) =>
-      `<div style="background:#170e11;border:1px solid #2b141a;padding:6px 10px;border-radius:5px;font-size:11.5px;margin-top:4px;display:flex;gap:8px;align-items:center">
-        <span style="color:#8c5864;font-family:monospace;font-size:10.5px">${String(idx + 1).padStart(2, "0")}</span>
+      `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);padding:6px 10px;border-radius:5px;font-size:11.5px;margin-top:4px;display:flex;gap:8px;align-items:center">
+        <span style="color:#7c8291;font-family:monospace;font-size:10.5px">${String(idx + 1).padStart(2, "0")}</span>
         <span>${x}</span>
       </div>`
     ).join("");
@@ -154,33 +163,33 @@
     box.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
         <div>
-          <div style="font-size:10px;letter-spacing:1.3px;color:#e02e31;font-weight:700">СПЛИН • ${a.year}</div>
+          <div style="font-size:10px;letter-spacing:1.3px;color:${accent};font-weight:700">СПЛИН • ${a.year}</div>
           <h2 style="font-size:21px;color:#fff;margin-top:2px;line-height:1.25">${a.title}</h2>
         </div>
-        <button id="clsAlb" style="background:#1d1215;color:#b5a5a9;border:1px solid #361a22;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:13px">✕</button>
+        <button id="clsAlb" style="background:rgba(255,255,255,0.07);color:#b5b9c4;border:1px solid rgba(255,255,255,0.12);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:13px">✕</button>
       </div>
 
-      <div style="background:#190f12;border:1px solid #33171e;padding:10px 12px;border-radius:8px">
-        <div style="font-size:9.5px;letter-spacing:1px;color:#e02e31;font-weight:700;margin-bottom:4px">ТОЧКА ВХОДА</div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);padding:10px 12px;border-radius:8px">
+        <div style="font-size:9.5px;letter-spacing:1px;color:${accent};font-weight:700;margin-bottom:4px">ТОЧКА ВХОДА</div>
         <div style="font-size:13px;font-weight:600;color:#fff">${a.entry}</div>
       </div>
 
-      <div style="background:#160e10;border-left:2px solid #e02e31;padding:10px 12px;font-size:12.5px;line-height:1.5;color:#d6cbce">${a.story}</div>
+      <div style="background:rgba(255,255,255,0.025);border-left:2px solid ${accent};padding:10px 12px;font-size:12.5px;line-height:1.5;color:#d6d8de">${a.story}</div>
 
-      <div style="background:#160e10;border:1px solid #29141a;padding:9px 12px;border-radius:8px;font-size:12px;color:#c2b2b6">
-        <span style="color:#8c5864;font-weight:700;font-size:10px;display:block;margin-bottom:3px;letter-spacing:0.8px">НИТОЧКИ СВЯЗЕЙ</span>
+      <div style="background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);padding:9px 12px;border-radius:8px;font-size:12px;color:#b8bec9">
+        <span style="color:#7c8291;font-weight:700;font-size:10px;display:block;margin-bottom:3px;letter-spacing:0.8px">НИТОЧКИ СВЯЗЕЙ</span>
         ${a.links}
       </div>
 
-      <details style="background:#140c0e;border:1px solid #29141a;border-radius:8px;padding:8px 10px">
-        <summary style="cursor:pointer;font-size:11px;font-weight:700;letter-spacing:0.8px;color:#9e888e;user-select:none">ТРЕКЛИСТ АЛЬБОМА (${a.tracks.length}) ▾</summary>
+      <details style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:8px 10px">
+        <summary style="cursor:pointer;font-size:11px;font-weight:700;letter-spacing:0.8px;color:#9da3b0;user-select:none">ТРЕКЛИСТ АЛЬБОМА (${a.tracks.length}) ▾</summary>
         <div style="margin-top:6px;max-height:210px;overflow-y:auto;padding-right:2px">${trs}</div>
       </details>
 
       <div style="margin-top:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <a href="${yaUrl}" target="_blank" style="background:#ffcc00;color:#000;text-align:center;padding:10px 8px;border-radius:8px;text-decoration:none;font-weight:700;font-size:12px">Яндекс Музыка ↗</a>
-        <a href="${vkUrl}" target="_blank" style="background:#241519;color:#fff;border:1px solid #401f27;text-align:center;padding:10px 8px;border-radius:8px;text-decoration:none;font-weight:600;font-size:12px">VK Музыка ↗</a>
-        <a href="${ytUrl}" target="_blank" style="grid-column:1 / -1;background:#e02e31;color:#fff;text-align:center;padding:10px;border-radius:8px;text-decoration:none;font-weight:600;font-size:12.5px">Клипы и лайвы эпохи ↗</a>
+        <a href="${vkUrl}" target="_blank" style="background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.14);text-align:center;padding:10px 8px;border-radius:8px;text-decoration:none;font-weight:600;font-size:12px">VK Музыка ↗</a>
+        <a href="${ytUrl}" target="_blank" style="grid-column:1 / -1;background:${accent};color:${isDarkTheme ? "#08090c" : "#fff"};text-align:center;padding:10px;border-radius:8px;text-decoration:none;font-weight:700;font-size:12.5px">Клипы и лайвы эпохи ↗</a>
       </div>
     `;
     document.getElementById("clsAlb").onclick = () => {
@@ -189,150 +198,140 @@
     };
   }
 
-  const wrap = document.createElement("div");
-  wrap.style.cssText = "position:relative;width:min(82vh,82vw);height:min(82vh,82vw);transform-origin:center center";
-  stage.appendChild(wrap);
+  let sceneLeaves = new Array();
+  let sceneTick = 0;
+  let sceneWrap = null;
 
-  const tip = document.createElement("div");
-  tip.style.cssText = "position:fixed;pointer-events:none;background:rgba(16,10,12,0.96);border:1px solid #e02e31;color:#fff;padding:6px 11px;border-radius:7px;font-size:12px;font-weight:600;z-index:130;display:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.75)";
-  document.body.appendChild(tip);
-
-  const animatedSeeds = new Array();
-
-  fetch("granat.svg")
-    .then(r => r.text())
-    .then(svgText => {
-      const cleanSvg = svgText.replace(/<\?xml[\s\S]*?\?>/i, "").replace(/<!DOCTYPE[\s\S]*?>/i, "");
-      wrap.innerHTML = cleanSvg;
-      const svgEl = wrap.querySelector("svg");
-      if (!svgEl) return;
-
-      svgEl.style.width = "100%";
-      svgEl.style.height = "100%";
-      svgEl.style.display = "block";
-      svgEl.style.overflow = "visible";
-
-      const allPaths = Array.from(svgEl.querySelectorAll("path"));
-      const shellPath = allPaths.shift();
-      if (shellPath) {
-        shellPath.style.fill = "#b82328";
-        shellPath.style.pointerEvents = "none";
-      }
-
-      const seedPaths = allPaths.filter(p => {
-        const b = p.getBBox();
-        return b.width > 80 && b.height > 80;
-      });
-
-      seedPaths.sort((p1, p2) => {
-        const b1 = p1.getBBox(), b2 = p2.getBBox();
-        return (b2.y - b1.y) * 0.6 + (b1.x - b2.x) * 0.4;
-      });
-
-      const step = Math.max(1, Math.floor(seedPaths.length / ALBUMS.length));
-      let albIdx = 0;
-
-      seedPaths.forEach((p, idx) => {
-        const bbox = p.getBBox();
-        const cx = (bbox.x + bbox.width * 0.5) * 0.1;
-        const cy = 350 - (bbox.y + bbox.height * 0.5) * 0.1;
-
-        animatedSeeds.push({ el: p, cx: cx, cy: cy, dx: 0, dy: 0, vx: 0, vy: 0 });
-        p.style.transition = "fill 0.2s ease, filter 0.2s ease";
-
-        if (idx % step === 0 && albIdx < ALBUMS.length) {
-          const alb = ALBUMS.at(albIdx);
-          albIdx++;
-          p.style.fill = "#eb363c";
-          p.style.cursor = "pointer";
-
-          p.addEventListener("mouseenter", () => {
-            p.style.fill = "#ff787d";
-            p.style.filter = "drop-shadow(0 0 22px rgba(255, 95, 105, 0.95))";
-            tip.textContent = alb.title + " • " + alb.year;
-            tip.style.display = "block";
-          });
-
-          p.addEventListener("mousemove", e => {
-            tip.style.left = (e.clientX + 14) + "px";
-            tip.style.top = (e.clientY - 14) + "px";
-          });
-
-          p.addEventListener("mouseleave", () => {
-            p.style.fill = "#eb363c";
-            p.style.filter = "none";
-            tip.style.display = "none";
-          });
-
-          p.addEventListener("click", e => {
-            e.stopPropagation();
-            showAlb(alb);
-          });
-        } else {
-          p.style.fill = "#9e1c22";
-          p.addEventListener("mouseenter", () => { p.style.fill = "#c4252c"; });
-          p.addEventListener("mouseleave", () => { p.style.fill = "#9e1c22"; });
-        }
-      });
-    });
-
-  function animateSeeds() {
-    if (animatedSeeds.length > 0) {
-      const rect = wrap.getBoundingClientRect();
-      if (rect.width > 0) {
-        const svgX = ((mouseX - rect.left) / rect.width) * 350;
-        const svgY = ((mouseY - rect.top) / rect.height) * 350;
-
-        for (let i = 0; i < animatedSeeds.length; i++) {
-          const s = animatedSeeds.at(i);
-          const diffX = s.cx - svgX;
-          const diffY = s.cy - svgY;
-          const dist = Math.hypot(diffX, diffY);
-
-          let targetDx = 0;
-          let targetDy = 0;
-          if (dist < 46 && dist > 0.1) {
-            const force = (1 - dist / 46) * 42;
-            targetDx = (diffX / dist) * force;
-            targetDy = -(diffY / dist) * force;
-          }
-
-          s.vx = (s.vx + (targetDx - s.dx) * 0.16) * 0.72;
-          s.vy = (s.vy + (targetDy - s.dy) * 0.16) * 0.72;
-          s.dx += s.vx;
-          s.dy += s.vy;
-
-          if (Math.abs(s.dx) > 0.05 || Math.abs(s.dy) > 0.05) {
-            s.el.style.transform = `translate(${s.dx.toFixed(2)}px, ${s.dy.toFixed(2)}px)`;
-          } else if (s.el.style.transform) {
-            s.el.style.transform = "";
-          }
-        }
-      }
-    }
-    requestAnimationFrame(animateSeeds);
-  }
-  animateSeeds();
-
-  function updTransform() {
-    wrap.style.transform = `translate(${vox}px, ${voy}px) scale(${vsc})`;
+  function closeAlbumScene() {
+    albScene.style.opacity = "0";
+    albScene.style.pointerEvents = "none";
+    stage.style.opacity = "1";
+    stage.style.transform = "scale(1)";
+    stage.style.pointerEvents = "auto";
+    box.style.display = "none";
+    const topBox = document.getElementById("topBox");
+    if (topBox) topBox.style.display = "block";
   }
 
-  stage.addEventListener("mousedown", e => {
-    drag = true; moved = false; lx = e.clientX; ly = e.clientY;
-    stage.style.cursor = "grabbing";
-  });
-  window.addEventListener("mousemove", e => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-    if (!drag) return;
-    vox += e.clientX - lx; voy += e.clientY - ly; lx = e.clientX; ly = e.clientY;
-    moved = true; updTransform();
-  });
-  window.addEventListener("mouseup", () => { drag = false; stage.style.cursor = "grab"; });
-  stage.addEventListener("wheel", e => {
-    e.preventDefault();
-    vsc = Math.min(2.6, Math.max(0.6, vsc * (e.deltaY < 0 ? 1.1 : 0.9)));
-    updTransform();
-  }, { passive: false });
-}
+  function openAlbumScene(alb) {
+    box.style.display = "none";
+    const topBox = document.getElementById("topBox");
+    if (topBox) topBox.style.display = "none";
+
+    stage.style.opacity = "0";
+    stage.style.transform = "scale(1.12)";
+    stage.style.pointerEvents = "none";
+
+    albScene.style.opacity = "1";
+    albScene.style.pointerEvents = "auto";
+    albScene.innerHTML = "";
+    sceneLeaves = new Array();
+
+    const navBar = document.createElement("div");
+    navBar.style.cssText = "position:fixed;top:20px;left:20px;z-index:115;display:flex;gap:8px;align-items:center;background:rgba(13,15,20,0.88);border:1px solid rgba(255,255,255,0.1);padding:8px 12px;border-radius:10px";
+    navBar.innerHTML = `
+      <button id="backToGranat" style="background:transparent;color:#e6e8ee;border:none;font-size:12.5px;font-weight:600;cursor:pointer">← Назад к гранату</button>
+      <span style="color:rgba(255,255,255,0.15)">|</span>
+      <button id="replayRevers" style="background:rgba(255,255,255,0.08);color:#cfd4e0;border:none;padding:5px 9px;border-radius:6px;font-size:11.5px;cursor:pointer">↻ Повторить</button>
+      <button id="infoRevers" style="background:#8fa3c7;color:#08090c;border:none;padding:5px 10px;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer">Об альбоме</button>
+    `;
+    albScene.appendChild(navBar);
+
+    document.getElementById("backToGranat").onclick = closeAlbumScene;
+    document.getElementById("infoRevers").onclick = () => showAlb(alb, true);
+
+    sceneWrap = document.createElement("div");
+    sceneWrap.style.cssText = "position:relative;width:min(82vh,82vw);height:min(82vh,82vw)";
+    albScene.appendChild(sceneWrap);
+
+    fetch(alb.svgFile)
+      .then(r => r.text())
+      .then(svgText => {
+        const cleanSvg = svgText.replace(/<\?xml[\s\S]*?\?>/i, "").replace(/<!DOCTYPE[\s\S]*?>/i, "");
+        sceneWrap.innerHTML = cleanSvg;
+        const svgEl = sceneWrap.querySelector("svg");
+        if (!svgEl) return;
+
+        svgEl.style.width = "100%";
+        svgEl.style.height = "100%";
+        svgEl.style.display = "block";
+        svgEl.style.overflow = "visible";
+
+        const allPaths = Array.from(svgEl.querySelectorAll("path"));
+        const items = allPaths.map(p => {
+          const b = p.getBBox();
+          return { el: p, b: b, area: b.width * b.height };
+        });
+        items.sort((a, b) => b.area - a.area);
+
+        const baseList = new Array();
+        const humanList = new Array();
+
+        const mainTree = items.shift();
+        if (mainTree) {
+          mainTree.el.style.fill = "#c8cedb";
+          baseList.push(mainTree.el);
+        }
+
+        items.forEach((it, idx) => {
+          const cx = (it.b.x + it.b.width * 0.5) * 0.1;
+          const cy = 592 - (it.b.y + it.b.height * 0.5) * 0.1;
+
+          if (it.area > 35000 && it.b.height > 260) {
+            it.el.style.fill = "#ffffff";
+            it.el.style.cursor = "pointer";
+            it.el.addEventListener("mouseenter", () => {
+              it.el.style.filter = "drop-shadow(0 0 18px rgba(143, 163, 199, 0.95))";
+            });
+            it.el.addEventListener("mouseleave", () => {
+              it.el.style.filter = "none";
+            });
+            it.el.addEventListener("click", e => {
+              e.stopPropagation();
+              showAlb(alb, true);
+            });
+            humanList.push(it.el);
+          } else {
+            it.el.style.fill = idx % 2 === 0 ? "#9aa4b8" : "#788299";
+            sceneLeaves.push({
+              el: it.el, cx: cx, cy: cy, phase: idx * 0.45,
+              dx: 0, dy: 0, vx: 0, vy: 0, ready: false
+            });
+          }
+        });
+
+        sceneLeaves.sort((a, b) => a.cx - b.cx);
+
+        function playSequence() {
+          baseList.forEach(p => {
+            p.style.transition = "none";
+            p.style.opacity = "0";
+            p.style.transform = "translateY(16px)";
+          });
+          humanList.forEach(p => {
+            p.style.transition = "none";
+            p.style.opacity = "0";
+            p.style.transform = "translateY(20px) scale(0.96)";
+          });
+          sceneLeaves.forEach(l => {
+            l.el.style.transition = "none";
+            l.el.style.opacity = "0";
+            l.ready = false;
+          });
+
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              baseList.forEach(p => {
+                p.style.transition = "opacity 0.9s ease, transform 0.9s cubic-bezier(0.22,1,0.36,1)";
+                p.style.opacity = "1";
+                p.style.transform = "translateY(0px)";
+              });
+              humanList.forEach(p => {
+                p.style.transition = "opacity 1.1s ease 0.7s, transform 1.1s cubic-bezier(0.22,1,0.36,1) 0.7s, filter 0.25s ease";
+                p.style.opacity = "1";
+                p.style.transform = "translateY(0px) scale(1)";
+              });
+              sceneLeaves.forEach((l, i) => {
+                const delay = 1.2 + (i / Math.max(1, sceneLeaves.length)) * 1.15;
+                l.el.style.transition = `opacity 0.65s ease ${delay.toFixed(2)}s`;
+                l.el.style.opacity = "1";
