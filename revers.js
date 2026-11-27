@@ -32,25 +32,37 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
     const origPaths = Array.from(grp.querySelectorAll("path"));
     const items = new Array();
 
-    function splitSubPaths(dStr) {
-      const clean = dStr
-        .replace(/([MmLlCcZz])/g, " $1 ")
-        .replace(/([0-9])-/g, "$1 -")
-        .replace(/,/g, " ")
-        .trim();
-      const tokens = clean.split(/\s+/);
+    function tokenizePath(str) {
+      const out = new Array();
+      let buf = "";
+      for (let k = 0; k < str.length; k++) {
+        const ch = str.charAt(k);
+        const isLetter = (ch >= "A" && ch <= "Z") || (ch >= "a" && ch <= "z");
+        if (isLetter && ch !== "e" && ch !== "E") {
+          if (buf.length > 0) { out.push(buf); buf = ""; }
+          out.push(ch);
+        } else if (ch === "-" && buf.length > 0 && buf.charAt(buf.length - 1) !== "e" && buf.charAt(buf.length - 1) !== "E") {
+          out.push(buf);
+          buf = "-";
+        } else if (ch === " " || ch === "," || ch === "\n" || ch === "\r" || ch === "\t") {
+          if (buf.length > 0) { out.push(buf); buf = ""; }
+        } else {
+          buf += ch;
+        }
+      }
+      if (buf.length > 0) out.push(buf);
+      return out;
+    }
 
+    function splitSubPaths(dStr) {
+      const tokens = tokenizePath(dStr);
       const res = new Array();
       let cur = new Array();
       let cx = 0, cy = 0, sx = 0, sy = 0, cmd = "", i = 0;
 
-      function isCmd(tok) {
-        return tok === "M" || tok === "m" || tok === "L" || tok === "l" || tok === "C" || tok === "c" || tok === "Z" || tok === "z";
-      }
-
       while (i < tokens.length) {
         const t = tokens.at(i);
-        if (isCmd(t)) {
+        if (t.length === 1 && ((t >= "A" && t <= "Z") || (t >= "a" && t <= "z"))) {
           cmd = t;
           i++;
           if (cmd === "Z" || cmd === "z") {
