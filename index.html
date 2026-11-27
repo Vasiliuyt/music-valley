@@ -33,7 +33,7 @@ canvas{display:block;width:100vw;height:100vh}
 </head>
 <body>
 <div class="top">
-  <div class="kicker">Audio Archive • v0.6</div>
+  <div class="kicker">Audio Archive • v0.7</div>
   <h1>Музыкальная Долина</h1>
   <input id="q" class="search" placeholder="Поиск по архиву...">
   <div class="legend" id="leg"></div>
@@ -62,6 +62,7 @@ const sorted=[...NODES].sort((a,b)=>a.year-b.year);
 const lanes=[-160,-55,50,155,-105,105];
 sorted.forEach((n,i)=>{n.x=-420+i*125;n.y=lanes[i%lanes.length];n.w=Math.max(120,n.name.length*8.2+34);n.h=34});
 const M={};NODES.forEach(x=>M[x.id]=x);
+LINKS.forEach(l=>l.prog=0);
 const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
 let W=cv.width=innerWidth,H=cv.height=innerHeight,cx=W/2,cy=H/2,sc=1,drag=null,pan=false,lx=0,ly=0,act=null,hov=null,q="",fs=null;
 onresize=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight};
@@ -71,10 +72,40 @@ onmousemove=e=>{if(drag){drag.x+=(e.clientX-lx)/sc;drag.y+=(e.clientY-ly)/sc;dra
 onmouseup=()=>{if(drag&&!drag.m)show(drag);drag=null;pan=false};
 cv.onwheel=e=>{e.preventDefault();const ns=Math.min(2.6,Math.max(.4,sc*(e.deltaY<0?1.1:.9)));const wx=(e.clientX-cx)/sc,wy=(e.clientY-cy)/sc;sc=ns;cx=e.clientX-wx*sc;cy=e.clientY-wy*sc};
 function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath()}
+function bez(p0,p1,p2,p3,t){const u=1-t;return u*u*u*p0+3*u*u*t*p1+3*u*t*t*p2+t*t*t*p3}
 function loop(){
   ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(cx,cy);ctx.scale(sc,sc);const foc=hov||act;
-  LINKS.forEach(l=>{const a=M[l.source],b=M[l.target];if(!a||!b)return;const hi=foc&&(foc.id===a.id||foc.id===b.id),mx=(a.x+b.x)/2;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.bezierCurveTo(mx,a.y,mx,b.y,b.x,b.y);ctx.strokeStyle=hi?(PAL[a.scene]||"#7b8eb8"):"rgba(255,255,255,.12)";ctx.lineWidth=hi?2:1;ctx.stroke();if(hi){ctx.fillStyle="#c8cdd8";ctx.font="10.5px sans-serif";ctx.textAlign="center";ctx.fillText(l.label,mx,(a.y+b.y)/2-7)}});
-  NODES.forEach(n=>{const col=PAL[n.scene]||"#8c96ab",ok=(!q||n.name.toLowerCase().includes(q))&&(!fs||n.scene===fs),sel=foc&&foc.id===n.id,rx=n.x-n.w/2,ry=n.y-n.h/2;ctx.globalAlpha=ok?1:.18;rr(rx,ry,n.w,n.h,7);ctx.fillStyle=sel?"#1b1f2b":"#11131a";ctx.fill();ctx.lineWidth=sel?1.6:1;ctx.strokeStyle=sel?col:"rgba(255,255,255,.12)";ctx.stroke();ctx.beginPath();ctx.arc(rx+13,n.y,3.5,0,6.29);ctx.fillStyle=col;ctx.fill();ctx.fillStyle="#5c6270";ctx.font="9.5px sans-serif";ctx.textAlign="left";ctx.fillText(n.year,rx+2,ry-5);ctx.fillStyle=sel?"#fff":"#dcdfe8";ctx.font="500 12.5px sans-serif";ctx.fillText(n.name,rx+23,n.y+4)});
+  LINKS.forEach(l=>{
+    const a=M[l.source],b=M[l.target];if(!a||!b)return;
+    const isFrom=foc&&foc.id===a.id,isTo=foc&&foc.id===b.id,hi=isFrom||isTo;
+    l.prog+=((hi?1:0)-l.prog)*0.09;
+    const mx=(a.x+b.x)/2;
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.bezierCurveTo(mx,a.y,mx,b.y,b.x,b.y);
+    ctx.strokeStyle="rgba(255,255,255,.045)";ctx.lineWidth=1;ctx.stroke();
+    if(l.prog>0.01){
+      const col=PAL[foc?foc.scene:a.scene]||"#7b8eb8";
+      ctx.beginPath();
+      const steps=28,maxS=Math.ceil(steps*l.prog);
+      for(let i=0;i<=maxS;i++){
+        const raw=Math.min(l.prog,i/steps),t=isTo?1-raw:raw;
+        const px=bez(a.x,mx,mx,b.x,t),py=bez(a.y,a.y,b.y,b.y,t);
+        i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+      }
+      ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
+      if(l.prog>0.75){ctx.globalAlpha=(l.prog-0.75)*4;ctx.fillStyle="#d6d8de";ctx.font="10.5px sans-serif";ctx.textAlign="center";ctx.fillText(l.label,mx,(a.y+b.y)/2-8);ctx.globalAlpha=1}
+    }
+  });
+  NODES.forEach(n=>{
+    const col=PAL[n.scene]||"#8c96ab",ok=(!q||n.name.toLowerCase().includes(q))&&(!fs||n.scene===fs);
+    const isLinked=foc&&(foc.id===n.id||LINKS.some(l=>(l.source===foc.id&&l.target===n.id)||(l.target===foc.id&&l.source===n.id)));
+    const sel=foc&&foc.id===n.id,rx=n.x-n.w/2,ry=n.y-n.h/2;
+    ctx.globalAlpha=ok?(foc?(isLinked?1:.35):1):.15;
+    rr(rx,ry,n.w,n.h,7);ctx.fillStyle=sel?"#1b1f2b":"#11131a";ctx.fill();
+    ctx.lineWidth=isLinked?1.5:1;ctx.strokeStyle=isLinked?col:"rgba(255,255,255,.1)";ctx.stroke();
+    ctx.beginPath();ctx.arc(rx+13,n.y,3.5,0,6.29);ctx.fillStyle=col;ctx.fill();
+    ctx.fillStyle="#5c6270";ctx.font="9.5px sans-serif";ctx.textAlign="left";ctx.fillText(n.year,rx+2,ry-5);
+    ctx.fillStyle=isLinked?"#fff":"#cfd4e0";ctx.font="500 12.5px sans-serif";ctx.fillText(n.name,rx+23,n.y+4);
+  });
   ctx.restore();requestAnimationFrame(loop);
 }
 loop();
@@ -91,7 +122,3 @@ Object.entries(SCENES).forEach(([k,s])=>{const el=document.createElement("div");
 document.getElementById("q").oninput=e=>{q=e.target.value.toLowerCase().trim()};
 let ti=-1;
 document.getElementById("tStart").onclick=()=>{ti=0;document.getElementById("tNext").style.display="inline-block";go(TOUR_IDS);document.getElementById("tInfo").textContent="01 / "+TOUR_IDS.length};
-document.getElementById("tNext").onclick=()=>{ti=(ti+1)%TOUR_IDS.length;go(TOUR_IDS[ti]);document.getElementById("tInfo").textContent=String(ti+1).padStart(2,"0")+" / "+TOUR_IDS.length};
-</script>
-</body>
-</html>
