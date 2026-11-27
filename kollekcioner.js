@@ -18,7 +18,7 @@ window.launchKollekcionerScene = function(alb, albScene, stage, box, showAlb) {
   sWrap.style.cssText = "position:relative;width:92vw;height:88vh;display:flex;align-items:center;justify-content:center";
   albScene.appendChild(sWrap);
 
-  fetch("kollekcioner.svg?v=6").then(function(r) { return r.text(); }).then(function(txt) {
+  fetch("kollekcioner.svg?v=8").then(function(r) { return r.text(); }).then(function(txt) {
     sWrap.innerHTML = txt.slice(txt.indexOf("<svg"));
     const svg = sWrap.querySelector("svg");
     const grp = svg ? svg.querySelector("g") : null;
@@ -31,14 +31,30 @@ window.launchKollekcionerScene = function(alb, albScene, stage, box, showAlb) {
     paths.forEach(function(p) {
       p.style.fill = "#ffffff";
       p.style.cursor = "pointer";
-      p.style.transition = "opacity 0.2s ease, filter 0.2s ease";
+      p.style.transformBox = "fill-box";
+      p.style.transformOrigin = "center center";
+      p.style.transition = "transform 0.25s cubic-bezier(.22,1,.36,1), opacity 0.25s ease, filter 0.25s ease";
+
       p.onmouseenter = function() {
-        p.style.filter = "drop-shadow(0 0 18px rgba(255,255,255,0.65))";
+        paths.forEach(function(other) {
+          if (other !== p) other.style.opacity = "0.45";
+        });
+        p.style.opacity = "1";
+        p.style.transform = "scale(1.07)";
+        p.style.filter = "drop-shadow(0 0 22px rgba(255,255,255,0.75))";
       };
+
       p.onmouseleave = function() {
+        paths.forEach(function(other) {
+          other.style.opacity = "1";
+        });
+        p.style.transform = "scale(1)";
         p.style.filter = "none";
       };
-      p.onclick = function() { showAlb(alb, true); };
+
+      p.onclick = function() {
+        showAlb(alb, true);
+      };
     });
   });
 };
