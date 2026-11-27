@@ -33,20 +33,24 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
     const items = new Array();
 
     function splitSubPaths(dStr) {
-      const tokens = dStr
-        .replace(/([A-Za-z])/g, " $1 ")
-        .replace(/-/g, " -")
+      const clean = dStr
+        .replace(/([MmLlCcZz])/g, " $1 ")
+        .replace(/([0-9])-/g, "$1 -")
         .replace(/,/g, " ")
-        .trim()
-        .split(/\s+/);
+        .trim();
+      const tokens = clean.split(/\s+/);
 
       const res = new Array();
       let cur = new Array();
       let cx = 0, cy = 0, sx = 0, sy = 0, cmd = "", i = 0;
 
+      function isCmd(tok) {
+        return tok === "M" || tok === "m" || tok === "L" || tok === "l" || tok === "C" || tok === "c" || tok === "Z" || tok === "z";
+      }
+
       while (i < tokens.length) {
         const t = tokens.at(i);
-        if (t.length === 1 && ((t >= "A" && t <= "Z") || (t >= "a" && t <= "z"))) {
+        if (isCmd(t)) {
           cmd = t;
           i++;
           if (cmd === "Z" || cmd === "z") {
@@ -55,13 +59,12 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
           }
           continue;
         }
-        const n = parseFloat(t);
-        if (isNaN(n)) { i++; continue; }
 
         if (cmd === "M" || cmd === "m") {
           if (cur.length > 0) { res.push(cur.join(" ")); cur = new Array(); }
           const x = parseFloat(tokens.at(i)), y = parseFloat(tokens.at(i + 1));
           i += 2;
+          if (isNaN(x) || isNaN(y)) break;
           cx = (cmd === "M") ? x : cx + x;
           cy = (cmd === "M") ? y : cy + y;
           sx = cx; sy = cy;
@@ -70,6 +73,7 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
         } else if (cmd === "L" || cmd === "l") {
           const x = parseFloat(tokens.at(i)), y = parseFloat(tokens.at(i + 1));
           i += 2;
+          if (isNaN(x) || isNaN(y)) break;
           cx = (cmd === "L") ? x : cx + x;
           cy = (cmd === "L") ? y : cy + y;
           cur.push("L" + cx + " " + cy);
@@ -78,6 +82,7 @@ window.launchReversScene = function(alb, albScene, stage, box, showAlb) {
           const x2 = parseFloat(tokens.at(i + 2)), y2 = parseFloat(tokens.at(i + 3));
           const x = parseFloat(tokens.at(i + 4)), y = parseFloat(tokens.at(i + 5));
           i += 6;
+          if (isNaN(x1) || isNaN(y)) break;
           const ax1 = (cmd === "C") ? x1 : cx + x1, ay1 = (cmd === "C") ? y1 : cy + y1;
           const ax2 = (cmd === "C") ? x2 : cx + x2, ay2 = (cmd === "C") ? y2 : cy + y2;
           cx = (cmd === "C") ? x : cx + x;
