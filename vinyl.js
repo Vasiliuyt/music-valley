@@ -1,5 +1,5 @@
 // ============================================================================
-// ВИЗУАЛЬНЫЙ МИР: СПЛИН — «ГРАНАТОВЫЙ АЛЬБОМ» (1998)
+// 2D-ПЛАКАТ ГРУППЫ «СПЛИН»: АЛЬБОМЫ КАК ГРАНАТОВЫЕ ЗЁРНА (БЕЗ ГРАДИЕНТОВ)
 // ============================================================================
 
 const vc = document.getElementById("vinylCv");
@@ -7,6 +7,7 @@ const vx = vc.getContext("2d");
 
 let vox = 0, voy = 0, vsc = 1, vdrag = false, vlx = 0, vly = 0;
 let mouseX = -9999, mouseY = -9999, tick = 0;
+let hoveredAlbum = null, activeAlbum = null;
 
 function resizeVinyl() {
   vc.width = window.innerWidth;
@@ -15,198 +16,198 @@ function resizeVinyl() {
 window.addEventListener("resize", resizeVinyl);
 resizeVinyl();
 
-vc.onmousedown = e => { vdrag = true; vlx = e.clientX; vly = e.clientY; };
-window.addEventListener("mousemove", e => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-  if (!vdrag) return;
-  vox += e.clientX - vlx;
-  voy += e.clientY - vly;
-  vlx = e.clientX;
-  vly = e.clientY;
-});
-window.addEventListener("mouseup", () => { vdrag = false; });
-vc.onwheel = e => {
-  e.preventDefault();
-  vsc = Math.min(2.4, Math.max(0.65, vsc * (e.deltaY < 0 ? 1.1 : 0.9)));
-};
+// Ключевые альбомы «Сплина» — каждое крупное зерно открывает свой релиз
+const ALBUMS = new Array(
+  {
+    id: "dust", title: "Пыльная быль", year: "1994", x: -230, y: -115, rx: 22, ry: 14, ang: -0.4,
+    note: "Дебютный альбом, записанный по ночам в петербургском театре «Буфф» на деньги, заработанные озвучкой рекламы.",
+    tracks: new Array("Жертва талого льда", "Рыба без трусов", "Сказка", "Под сурдинку")
+  },
+  {
+    id: "lantern", title: "Фонарь под глазом", year: "1997", x: -120, y: 125, rx: 24, ry: 15, ang: 0.5,
+    note: "Пластинка, с которой группа вышла на всероссийский уровень: акустическая меланхолия, флейта и нервный питерский рок.",
+    tracks: new Array("Англо-русский словарь", "Бонни и Клайд", "Частушки", "Моя любовь")
+  },
+  {
+    id: "granat", title: "Гранатовый альбом", year: "1998", x: 0, y: -20, rx: 32, ry: 20, ang: -0.2,
+    note: "Главный прорыв конца 90-х: жёсткий гитарный звук, нерв эпохи и абсолютные хиты, определившие звучание русского рока.",
+    tracks: new Array("Орбит без сахара", "Выхода нет", "Весь этот бред", "Катись, колесо!")
+  },
+  {
+    id: "altavista", title: "Альтависта", year: "1999", x: 115, y: -145, rx: 24, ry: 15, ang: 0.35,
+    note: "Экспериментальный, тяжёлый и психоделический поворот после стадионного успеха «Гранатового альбома».",
+    tracks: new Array("Молоко и мёд", "Альтависта", "Пил-курил", "Мотоциклетная цепь")
+  },
+  {
+    id: "25kadr", title: "25-й кадр", year: "2001", x: 145, y: 95, rx: 26, ry: 16, ang: -0.55,
+    note: "Один из самых плотных по хитам альбомов 2000-х, записанный обновлённым составом с острыми социальными и лирическими текстами.",
+    tracks: new Array("Линия жизни", "Моё сердце", "Остаёмся зимовать", "Феллини")
+  },
+  {
+    id: "newpeople", title: "Новые люди", year: "2003", x: -15, y: 185, rx: 24, ry: 15, ang: 0.25,
+    note: "Минималистичный, прозрачный и нервный альбом-наблюдение за меняющимся городом и людьми нового века.",
+    tracks: new Array("Новые люди", "Время, назад!", "Гандбол", "Сломано всё")
+  },
+  {
+    id: "split", title: "Раздвоение личности", year: "2007", x: 265, y: -35, rx: 25, ry: 16, ang: 0.65,
+    note: "Двойная концептуальная работа из 17 песен на стыке психоделии, романса и тяжёлого арт-рока.",
+    tracks: new Array("Скажи", "Маяк (на стихи Маяковского)", "Мама мия", "Прочь из моей головы")
+  },
+  {
+    id: "resonans", title: "Резонанс", year: "2014", x: -265, y: 45, rx: 23, ry: 14, ang: -0.7,
+    note: "Двухчастный философский цикл зрелого «Сплина» с камерной поэзией и акустическими балладами.",
+    tracks: new Array("Рай в шалаше", "Оркестр", "Танцуй!", "Старый дом")
+  }
+);
 
-// Генератор детерминированных случайных чисел
+// Создаём встроенную боковую панель под альбом, если её ещё нет в HTML
+let sidePanel = document.getElementById("albumDrawer");
+if (!sidePanel) {
+  sidePanel = document.createElement("div");
+  sidePanel.id = "albumDrawer";
+  sidePanel.style.cssText = "position:fixed;top:20px;right:20px;bottom:20px;width:360px;max-width:calc(100vw - 40px);background:#100d10;border:1px solid #2b181d;border-radius:12px;padding:22px;z-index:120;display:none;flex-direction:column;gap:14px;color:#e6e2e3;font-family:-apple-system,sans-serif;overflow-y:auto";
+  document.body.appendChild(sidePanel);
+}
+
+function openAlbumPanel(alb) {
+  activeAlbum = alb;
+  sidePanel.style.display = "flex";
+  const trkHtml = alb.tracks.map(t => `<div style="background:#191215;border:1px solid #2e181e;padding:8px 11px;border-radius:6px;font-size:12.5px;margin-top:6px">${t}</div>`).join("");
+  const spUrl = "https://spotify.com" + encodeURIComponent("Сплин " + alb.title);
+  sidePanel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#c92a3e;font-weight:700;margin-bottom:4px">СПЛИН • ${alb.year}</div>
+        <h2 style="font-size:21px;color:#fff;font-weight:600">${alb.title}</h2>
+      </div>
+      <button id="closeAlbBtn" style="background:#1c1518;color:#a89ea1;border:1px solid #301d22;padding:5px 10px;border-radius:6px;cursor:pointer">✕</button>
+    </div>
+    <div style="background:#161013;border-left:2px solid #c92a3e;padding:11px 13px;font-size:13px;line-height:1.5;color:#cfc6c9">${alb.note}</div>
+    <div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:#7a6c70;font-weight:700;margin-bottom:4px">Ключевые треки</div>
+      ${trkHtml}
+    </div>
+    <a href="${spUrl}" target="_blank" style="margin-top:auto;background:#c92a3e;color:#fff;text-align:center;padding:11px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px">Открыть альбом в Spotify ↗</a>
+  `;
+  document.getElementById("closeAlbBtn").onclick = () => {
+    sidePanel.style.display = "none";
+    activeAlbum = null;
+  };
+}
+
+// Генерируем плоский 2D-ковёр фоновых гранатовых зёрен (без наложения на альбомы)
 let seed = 1998;
 function rnd() {
   seed = (seed * 1664525 + 1013904223) % 4294967296;
   return seed / 4294967296;
 }
 
-// Генерируем плотный ковёр гранатовых зёрен вокруг центральной гильзы
-const SEEDS = new Array();
-const SHELL_R = 88;
+const BG_SEEDS = new Array();
+for (let i = 0; i < 260; i++) {
+  const a = rnd() * Math.PI * 2;
+  const r = Math.sqrt(rnd()) * 420;
+  const bx = Math.cos(a) * r * 1.18;
+  const by = Math.sin(a) * r * 0.85;
 
-for (let ring = SHELL_R + 12; ring <= 480; ring += 23) {
-  const count = Math.floor((Math.PI * 2 * ring) / 25);
-  for (let i = 0; i < count; i++) {
-    const baseA = (i / count) * Math.PI * 2 + (rnd() - 0.5) * 0.16;
-    const baseR = ring + (rnd() - 0.5) * 11;
-    const bx = Math.cos(baseA) * baseR;
-    const by = Math.sin(baseA) * baseR;
-    SEEDS.push({
-      bx: bx,
-      by: by,
-      x: bx,
-      y: by,
-      vx: 0,
-      vy: 0,
-      rx: 12 + rnd() * 5.5,
-      ry: 8.5 + rnd() * 4,
-      ang: rnd() * Math.PI * 2,
-      hueShift: (rnd() - 0.5) * 14,
-      phase: rnd() * Math.PI * 2
-    });
+  // Оставляем аккуратную охранную зону вокруг зёрен-альбомов
+  let tooClose = false;
+  for (const alb of ALBUMS) {
+    if (Math.hypot(bx - alb.x, by - alb.y) < alb.rx + 26) {
+      tooClose = true;
+      break;
+    }
   }
+  if (tooClose) continue;
+
+  const tonePick = rnd();
+  const fill = tonePick < 0.45 ? "#240a10" : (tonePick < 0.82 ? "#330e17" : "#1c070c");
+  BG_SEEDS.push({
+    bx: bx, by: by, x: bx, y: by, vx: 0, vy: 0,
+    rx: 10 + rnd() * 7,
+    ry: 6 + rnd() * 4.5,
+    ang: rnd() * Math.PI * 2,
+    fill: fill,
+    phase: rnd() * Math.PI * 2
+  });
 }
 
-// Отрисовка одного полупрозрачного гранатового зерна с бликом
-function drawSeed(s) {
+function getHoveredAlbum(mx, my) {
+  for (let i = ALBUMS.length - 1; i >= 0; i--) {
+    const a = ALBUMS[i];
+    if (Math.hypot(mx - a.x, my - a.y) <= a.rx + 10) return a;
+  }
+  return null;
+}
+
+vc.onmousedown = e => {
+  vdrag = true;
+  vdragMoved = false;
+  vlx = e.clientX;
+  vly = e.clientY;
+};
+let vdragMoved = false;
+window.addEventListener("mousemove", e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  if (vdrag) {
+    vox += e.clientX - vlx;
+    voy += e.clientY - vly;
+    vlx = e.clientX;
+    vly = e.clientY;
+    vdragMoved = true;
+  }
+});
+window.addEventListener("mouseup", () => {
+  if (vdrag && !vdragMoved && hoveredAlbum) {
+    openAlbumPanel(hoveredAlbum);
+  }
+  vdrag = false;
+});
+vc.onwheel = e => {
+  e.preventDefault();
+  vsc = Math.min(2.2, Math.max(0.65, vsc * (e.deltaY < 0 ? 1.1 : 0.9)));
+};
+
+// Плоская 2D-отрисовка одного гранатового зерна (строго без градиентов)
+function drawFlatSeed(x, y, rx, ry, ang, fillCol, strokeCol, lineW, hasFacet) {
   vx.save();
-  vx.translate(s.x, s.y);
-  vx.rotate(s.ang);
+  vx.translate(x, y);
+  vx.rotate(ang);
 
-  // Мягкая глубокая тень под зерном
-  vx.fillStyle = "rgba(8, 2, 4, 0.72)";
   vx.beginPath();
-  vx.ellipse(2, 3, s.rx * 1.04, s.ry * 1.04, 0, 0, Math.PI * 2);
-  vx.fill();
-
-  // Рубиновое тело зерна (многослойный градиент)
-  const g = vx.createRadialGradient(-s.rx * 0.25, -s.ry * 0.25, 1, 0, 0, s.rx * 1.15);
-  const rMain = Math.min(210, Math.max(120, Math.floor(168 + s.hueShift)));
-  g.addColorStop(0, "rgba(" + rMain + ", 24, 42, 0.92)");
-  g.addColorStop(0.62, "rgba(112, 10, 22, 0.95)");
-  g.addColorStop(1, "rgba(44, 4, 10, 0.98)");
-
-  vx.fillStyle = g;
-  vx.beginPath();
-  // Слегка огранённая форма натурального зерна
-  vx.moveTo(-s.rx, 0);
-  vx.bezierCurveTo(-s.rx, -s.ry * 1.15, s.rx * 0.7, -s.ry * 1.1, s.rx, 0);
-  vx.bezierCurveTo(s.rx * 0.7, s.ry * 1.1, -s.rx, s.ry * 1.15, -s.rx, 0);
+  vx.moveTo(-rx, 0);
+  vx.lineTo(-rx * 0.45, -ry * 0.92);
+  vx.lineTo(rx * 0.48, -ry * 0.88);
+  vx.lineTo(rx, 0);
+  vx.lineTo(rx * 0.48, ry * 0.88);
+  vx.lineTo(-rx * 0.45, ry * 0.92);
   vx.closePath();
+
+  vx.fillStyle = fillCol;
   vx.fill();
 
-  // Внутренняя косточка (лёгкий светлый отблеск в глубине)
-  vx.fillStyle = "rgba(255, 130, 145, 0.14)";
-  vx.beginPath();
-  vx.ellipse(0, 0, s.rx * 0.42, s.ry * 0.35, 0, 0, Math.PI * 2);
-  vx.fill();
-
-  // Глянцевый студийный блик на грани
-  vx.fillStyle = "rgba(255, 220, 225, 0.36)";
-  vx.beginPath();
-  vx.ellipse(-s.rx * 0.32, -s.ry * 0.35, s.rx * 0.28, s.ry * 0.13, -0.35, 0, Math.PI * 2);
-  vx.fill();
-
-  vx.restore();
-}
-
-// Вспомогательная функция для текста по дуге на донце гильзы
-function drawCurvedText(text, radius, startAngle, stepAngle, bottomHalf) {
-  vx.save();
-  for (let i = 0; i < text.length; i++) {
-    const a = startAngle + i * stepAngle;
-    vx.save();
-    vx.rotate(a);
-    vx.translate(0, bottomHalf ? radius : -radius);
-    if (bottomHalf) vx.rotate(Math.PI);
-    vx.fillText(text[i], 0, 0);
-    vx.restore();
+  if (strokeCol) {
+    vx.strokeStyle = strokeCol;
+    vx.lineWidth = lineW || 1;
+    vx.stroke();
   }
-  vx.restore();
-}
 
-// Отрисовка металлического донца гильзы по центру (в стиле обложки 1998 года)
-function drawShellCasing(mx, my) {
-  const distToMouse = Math.hypot(mx, my);
-  const hoverBoost = distToMouse < SHELL_R ? (1 - distToMouse / SHELL_R) * 0.08 : 0;
-
-  vx.save();
-  vx.scale(1 + hoverBoost, 1 + hoverBoost);
-
-  // Глубокая тень гильзы на зёрнах
-  vx.fillStyle = "rgba(0, 0, 0, 0.8)";
-  vx.beginPath();
-  vx.arc(4, 7, SHELL_R + 4, 0, Math.PI * 2);
-  vx.fill();
-
-  // Внешняя закраина латунной/стальной гильзы с патиной
-  const rimGrad = vx.createRadialGradient(-25, -25, 10, 0, 0, SHELL_R);
-  rimGrad.addColorStop(0, "#b8b49c");
-  rimGrad.addColorStop(0.65, "#8b8873");
-  rimGrad.addColorStop(0.92, "#666352");
-  rimGrad.addColorStop(1, "#3d3b30");
-
-  vx.fillStyle = rimGrad;
-  vx.beginPath();
-  vx.arc(0, 0, SHELL_R, 0, Math.PI * 2);
-  vx.fill();
-
-  // Утопленное внутреннее кольцо под надпись
-  vx.strokeStyle = "rgba(30, 29, 22, 0.65)";
-  vx.lineWidth = 2;
-  vx.beginPath();
-  vx.arc(0, 0, SHELL_R - 7, 0, Math.PI * 2);
-  vx.stroke();
-
-  // Кольцо вокруг капсюля
-  vx.fillStyle = "#7a7763";
-  vx.beginPath();
-  vx.arc(0, 0, 44, 0, Math.PI * 2);
-  vx.fill();
-  vx.strokeStyle = "#2b2a20";
-  vx.lineWidth = 2.5;
-  vx.stroke();
-
-  // Внутренний бортик и сам капсюль в центре
-  vx.strokeStyle = "rgba(215, 212, 190, 0.35)";
-  vx.lineWidth = 1.5;
-  vx.beginPath();
-  vx.arc(0, 0, 34, 0, Math.PI * 2);
-  vx.stroke();
-
-  const capGrad = vx.createRadialGradient(-6, -6, 2, 0, 0, 24);
-  capGrad.addColorStop(0, "#a8a48c");
-  capGrad.addColorStop(0.8, "#7c7965");
-  capGrad.addColorStop(1, "#454336");
-  vx.fillStyle = capGrad;
-  vx.beginPath();
-  vx.arc(0, 0, 24, 0, Math.PI * 2);
-  vx.fill();
-  vx.strokeStyle = "#1f1e17";
-  vx.lineWidth = 2.2;
-  vx.stroke();
-
-  // Штампованная гравировка на гильзе: ★ СПЛИН ★ ГРАНАТОВЫЙ АЛЬБОМ и клейма 17 / Д
-  vx.fillStyle = "rgba(32, 31, 24, 0.85)";
-  vx.font = "700 11.5px -apple-system, BlinkMacSystemFont, monospace";
-  vx.textAlign = "center";
-  vx.textBaseline = "middle";
-
-  // Верхняя дуга: ★ СПЛИН ★ ГРАНАТОВЫЙ
-  drawCurvedText("★ СПЛИН ★ ГРАНАТОВЫЙ", 63, -1.78, 0.175, false);
-  // Нижняя дуга: АЛЬБОМ
-  drawCurvedText("АЛЬБОМ", 63, 0.45, -0.18, true);
-
-  // Мелкие заводские клейма "17" сверху и "Д" снизу у капсюля
-  vx.font = "700 9px monospace";
-  vx.fillStyle = "rgba(35, 34, 26, 0.7)";
-  vx.fillText("17", 0, -38);
-  vx.fillText("Д", 0, 38);
+  // Плоская геометрическая грань-прожилка внутри зерна (2D-графика)
+  if (hasFacet) {
+    vx.beginPath();
+    vx.moveTo(-rx * 0.55, -ry * 0.15);
+    vx.lineTo(rx * 0.35, -ry * 0.35);
+    vx.strokeStyle = "rgba(255, 255, 255, 0.28)";
+    vx.lineWidth = 1.4;
+    vx.stroke();
+  }
 
   vx.restore();
 }
 
-function drawSpleenWorld() {
-  tick += 0.02;
-  vx.fillStyle = "#140306";
+function drawSpleen2D() {
+  tick += 0.018;
+  vx.fillStyle = "#0a0809";
   vx.fillRect(0, 0, vc.width, vc.height);
 
   vx.save();
@@ -215,50 +216,49 @@ function drawSpleenWorld() {
 
   const mx = (mouseX - (vc.width / 2 + vox)) / vsc;
   const my = (mouseY - (vc.height / 2 + voy)) / vsc;
+  hoveredAlbum = getHoveredAlbum(mx, my);
+  vc.style.cursor = hoveredAlbum ? "pointer" : (vdrag ? "grabbing" : "grab");
 
-  // Физика упругого отталкивания зёрен от курсора
-  for (let i = 0; i < SEEDS.length; i++) {
-    const s = SEEDS[i];
-    const breathX = Math.cos(tick + s.phase) * 1.2;
-    const breathY = Math.sin(tick + s.phase) * 1.2;
-    const targetX = s.bx + breathX;
-    const targetY = s.by + breathY;
-
-    const dx = s.x - mx;
-    const dy = s.y - my;
+  // 1. Фоновые плоские зёрна с лёгким откликом на курсор
+  for (let i = 0; i < BG_SEEDS.length; i++) {
+    const s = BG_SEEDS[i];
+    const tx = s.bx + Math.cos(tick + s.phase) * 1.4;
+    const ty = s.by + Math.sin(tick + s.phase) * 1.4;
+    const dx = s.x - mx, dy = s.y - my;
     const dist = Math.hypot(dx, dy);
-
-    if (dist < 75 && dist > 0.1) {
-      const push = (1 - dist / 75) * 4.5;
-      s.vx += (dx / dist) * push;
-      s.vy += (dy / dist) * push;
+    if (dist < 70 && dist > 0.1) {
+      const f = (1 - dist / 70) * 3.5;
+      s.vx += (dx / dist) * f;
+      s.vy += (dy / dist) * f;
     }
-
-    // Возврат на место (пружина) + затухание
-    s.vx += (targetX - s.x) * 0.08;
-    s.vy += (targetY - s.y) * 0.08;
-    s.vx *= 0.78;
-    s.vy *= 0.78;
+    s.vx = (s.vx + (tx - s.x) * 0.08) * 0.8;
+    s.vy = (s.vy + (ty - s.y) * 0.08) * 0.8;
     s.x += s.vx;
     s.y += s.vy;
 
-    drawSeed(s);
+    drawFlatSeed(s.x, s.y, s.rx, s.ry, s.ang, s.fill, "#140408", 1, false);
   }
 
-  // Донце гильзы по центру поверх зёрен
-  drawShellCasing(mx, my);
+  // 2. Тонкие 2D-нити хронологии между альбомами
+  vx.beginPath();
+  for (let i = 0; i < ALBUMS.length; i++) {
+    const a = ALBUMS[i];
+    i === 0 ? vx.moveTo(a.x, a.y) : vx.lineTo(a.x, a.y);
+  }
+  vx.strokeStyle = "rgba(201, 42, 62, 0.22)";
+  vx.lineWidth = 1;
+  vx.setLineDash(new Array(4, 6));
+  vx.stroke();
+  vx.setLineDash(new Array());
 
-  // Мягкая тёмная виньетка по краям экрана
-  vx.restore();
-  const vig = vx.createRadialGradient(
-    vc.width / 2, vc.height / 2, Math.min(vc.width, vc.height) * 0.32,
-    vc.width / 2, vc.height / 2, Math.max(vc.width, vc.height) * 0.72
-  );
-  vig.addColorStop(0, "rgba(0, 0, 0, 0)");
-  vig.addColorStop(1, "rgba(5, 1, 2, 0.85)");
-  vx.fillStyle = vig;
-  vx.fillRect(0, 0, vc.width, vc.height);
+  // 3. Акцентные кликабельные зёрна-альбомы
+  for (let i = 0; i < ALBUMS.length; i++) {
+    const a = ALBUMS[i];
+    const isH = hoveredAlbum && hoveredAlbum.id === a.id;
+    const isAct = activeAlbum && activeAlbum.id === a.id;
+    const scaleBoost = isH || isAct ? 1.14 : 1;
 
-  requestAnimationFrame(drawSpleenWorld);
-}
-drawSpleenWorld();
+    if (isH || isAct) {
+      vx.beginPath();
+      vx.arc(a.x, a.y, a.rx + 14, 0, Math.PI * 2);
+      vx.strokeStyle = "rgba(224, 49, 71, 0.45)";
