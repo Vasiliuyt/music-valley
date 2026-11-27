@@ -14,7 +14,6 @@
   let vox = 0, voy = 0, vsc = 1, drag = false, moved = false, lx = 0, ly = 0, act = null;
   let mouseX = -9999, mouseY = -9999;
 
-  // 16 студийных альбомов «Сплина»: бэкграунд, точка входа, связи и полные треклисты
   const ALBUMS = new Array(
     {
       id: "dust", title: "Пыльная быль", year: "1994",
@@ -235,7 +234,6 @@
 
       seedPaths.forEach((p, idx) => {
         const bbox = p.getBBox();
-        // Центр зерна в системе координат SVG (0..350 с учётом перевёрнутой оси Y)
         const cx = (bbox.x + bbox.width * 0.5) * 0.1;
         const cy = 350 - (bbox.y + bbox.height * 0.5) * 0.1;
 
@@ -278,36 +276,37 @@
       });
     });
 
-  // Плавная физика деликатного поползновения зёрен от курсора
   function animateSeeds() {
-    if (animatedSeeds.length > 0 && stage.offsetParent !== null) {
+    if (animatedSeeds.length > 0) {
       const rect = wrap.getBoundingClientRect();
-      const svgX = ((mouseX - rect.left) / rect.width) * 350;
-      const svgY = ((mouseY - rect.top) / rect.height) * 350;
+      if (rect.width > 0) {
+        const svgX = ((mouseX - rect.left) / rect.width) * 350;
+        const svgY = ((mouseY - rect.top) / rect.height) * 350;
 
-      for (let i = 0; i < animatedSeeds.length; i++) {
-        const s = animatedSeeds.at(i);
-        const diffX = s.cx - svgX;
-        const diffY = s.cy - svgY;
-        const dist = Math.hypot(diffX, diffY);
+        for (let i = 0; i < animatedSeeds.length; i++) {
+          const s = animatedSeeds.at(i);
+          const diffX = s.cx - svgX;
+          const diffY = s.cy - svgY;
+          const dist = Math.hypot(diffX, diffY);
 
-        let targetDx = 0;
-        let targetDy = 0;
-        if (dist < 42 && dist > 0.1) {
-          const force = (1 - dist / 42) * 32; // деликатный сдвиг в координатах path
-          targetDx = (diffX / dist) * force;
-          targetDy = -(diffY / dist) * force; // инверсия Y для внутреннего SVG-пространства
-        }
+          let targetDx = 0;
+          let targetDy = 0;
+          if (dist < 46 && dist > 0.1) {
+            const force = (1 - dist / 46) * 42;
+            targetDx = (diffX / dist) * force;
+            targetDy = -(diffY / dist) * force;
+          }
 
-        s.vx = (s.vx + (targetDx - s.dx) * 0.14) * 0.72;
-        s.vy = (s.vy + (targetDy - s.dy) * 0.14) * 0.72;
-        s.dx += s.vx;
-        s.dy += s.vy;
+          s.vx = (s.vx + (targetDx - s.dx) * 0.16) * 0.72;
+          s.vy = (s.vy + (targetDy - s.dy) * 0.16) * 0.72;
+          s.dx += s.vx;
+          s.dy += s.vy;
 
-        if (Math.abs(s.dx) > 0.05 || Math.abs(s.dy) > 0.05) {
-          s.el.setAttribute("transform", `translate(${s.dx.toFixed(2)}, ${s.dy.toFixed(2)})`);
-        } else if (s.el.hasAttribute("transform")) {
-          s.el.removeAttribute("transform");
+          if (Math.abs(s.dx) > 0.05 || Math.abs(s.dy) > 0.05) {
+            s.el.style.transform = `translate(${s.dx.toFixed(2)}px, ${s.dy.toFixed(2)}px)`;
+          } else if (s.el.style.transform) {
+            s.el.style.transform = "";
+          }
         }
       }
     }
