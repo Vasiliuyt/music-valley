@@ -1,7 +1,3 @@
-// ============================================================================
-// ДВИЖОК ВИНИЛОВОЙ ДИОРАМЫ САНКТ-ПЕТЕРБУРГА (v2.0)
-// ============================================================================
-
 const vc = document.getElementById("vinylCv");
 const vx = vc.getContext("2d");
 
@@ -33,7 +29,6 @@ function pt(r, a) {
   return { x: Math.cos(a) * r, y: Math.sin(a) * r * TILT };
 }
 
-// 1. КОЛЬЦЕВЫЕ КАНАЛЫ (идут ТОЛЬКО вдоль окружности пластинки с живым изгибом)
 const CANALS = [
   { rBase: 205, width: 15, amp1: 11, freq1: 2, phase1: 0.3, amp2: 5, freq2: 5, phase2: 1.1 },
   { rBase: 325, width: 13, amp1: 14, freq1: 3, phase1: 1.7, amp2: 6, freq2: 4, phase2: 0.5 }
@@ -43,13 +38,11 @@ function getCanalR(c, a) {
   return c.rBase + Math.sin(a * c.freq1 + c.phase1) * c.amp1 + Math.cos(a * c.freq2 + c.phase2) * c.amp2;
 }
 
-// 2. КОЛЬЦЕВЫЕ И ДУГОВЫЕ УЛИЦЫ (делят город на чёткие читаемые кварталы)
 const STREETS_R =;
 function getStreetR(baseR, a) {
   return baseR + Math.sin(a * 2 + baseR * 0.02) * 6;
 }
 
-// Короткие поперечные переулки только между соседними улицами (НЕ через весь диск!)
 const ALLEYS = [
   { a: 0.35, r1: 122, r2: 205 }, { a: 1.15, r1: 205, r2: 325 }, { a: 1.95, r1: 122, r2: 205 },
   { a: 2.65, r1: 205, r2: 325 }, { a: 3.45, r1: 122, r2: 205 }, { a: 4.15, r1: 205, r2: 325 },
@@ -71,7 +64,6 @@ function isRoadOrWater(r, a) {
   return false;
 }
 
-// 3. ГЕНЕРАЦИЯ ДОМОВ: стоят строго вдоль красных линий улиц и набережных
 const HOUSES = [];
 let seed = 108;
 function rnd() {
@@ -79,37 +71,27 @@ function rnd() {
   return seed / 4294967296;
 }
 
-// Линии застройки по обе стороны от улиц и каналов (оставляя дворы-колодцы внутри кварталов!)
-const BUILDING_LINES = [
-  134, 145,       // Внутренний пояс у яблока
-  172, 188,       // Между 1-й улицей и 1-м каналом
-  224, 249,       // Между 1-м каналом и 2-й улицей
-  280, 306,       // Между 2-й улицей и 2-м каналом
-  344, 364,       // Между 2-м каналом и 3-й улицей
-  392, 406        // Внешний пояс к краю пластинки
-];
+const BUILDING_LINES =;
 
 BUILDING_LINES.forEach((rLine, lineIdx) => {
   const count = Math.floor(rLine * 0.24);
   for (let i = 0; i < count; i++) {
-    if (rnd() < 0.22) continue; // арки и разрывы между домами
+    if (rnd() < 0.22) continue;
     const a = (i / count) * Math.PI * 2 + (rnd() - 0.5) * 0.035;
     const r = rLine + Math.sin(a * 2 + lineIdx) * 4 + (rnd() - 0.5) * 2.5;
     if (r < 126 || r > 416 || isRoadOrWater(r, a)) continue;
-
     const pos = pt(r, a);
     HOUSES.push({
       x: pos.x,
       y: pos.y,
-      w: 5.5 + rnd() * 11,           // разная длина фасада вдоль улицы
-      d: 4 + rnd() * 4.5,            // глубина корпуса
-      h: 8 + rnd() * 22 * (1 - (r - 125) / 420), // разная этажность
-      ang: a + Math.PI / 2 + (rnd() - 0.5) * 0.12 // повторяет изгиб улицы
+      w: 5.5 + rnd() * 11,
+      d: 4 + rnd() * 4.5,
+      h: 8 + rnd() * 22 * (1 - (r - 125) / 420),
+      ang: a + Math.PI / 2 + (rnd() - 0.5) * 0.12
     });
   }
 });
 
-// Сортируем строго сзади наперёд по координате Y на экране
 HOUSES.sort((a, b) => a.y - b.y);
 
 function drawHouse(b) {
@@ -117,13 +99,11 @@ function drawHouse(b) {
   const dx1 = c * b.w, dy1 = s * b.w;
   const dx2 = -Math.sin(b.ang) * b.d, dy2 = Math.cos(b.ang) * b.d * TILT;
 
-  // 4 угла основания, стоящего ПЛОТНО на поверхности пластинки
   const p1 = { x: b.x - dx1 - dx2, y: b.y - dy1 - dy2 };
   const p2 = { x: b.x + dx1 - dx2, y: b.y + dy1 - dy2 };
   const p3 = { x: b.x + dx1 + dx2, y: b.y + dy1 + dy2 };
   const p4 = { x: b.x - dx1 + dx2, y: b.y - dy1 + dy2 };
 
-  // Направленная тень строго от основания дома влево-назад (НЕ отрывается от пола!)
   vx.fillStyle = "rgba(0, 0, 0, 0.5)";
   vx.beginPath();
   vx.moveTo(p1.x, p1.y);
@@ -133,7 +113,6 @@ function drawHouse(b) {
   vx.closePath();
   vx.fill();
 
-  // Левая стена (освещённая)
   vx.fillStyle = "#1e2330";
   vx.beginPath();
   vx.moveTo(p4.x, p4.y);
@@ -143,7 +122,6 @@ function drawHouse(b) {
   vx.closePath();
   vx.fill();
 
-  // Правая стена (в тени)
   vx.fillStyle = "#141822";
   vx.beginPath();
   vx.moveTo(p3.x, p3.y);
@@ -153,7 +131,6 @@ function drawHouse(b) {
   vx.closePath();
   vx.fill();
 
-  // Тёмный цоколь/фундамент по низу, чтобы дом намертво стоял на виниле
   vx.strokeStyle = "#08090d";
   vx.lineWidth = 1.2;
   vx.beginPath();
@@ -162,7 +139,6 @@ function drawHouse(b) {
   vx.lineTo(p2.x, p2.y);
   vx.stroke();
 
-  // Крыша единого графитового оттенка
   vx.fillStyle = "#293042";
   vx.beginPath();
   vx.moveTo(p1.x, p1.y - b.h);
@@ -182,13 +158,11 @@ function drawVinylLoop() {
   vx.translate(vc.width / 2 + vox, vc.height / 2 + voy);
   vx.scale(vsc, vsc);
 
-  // Тень и 3D-торец пластинки
   vx.fillStyle = "rgba(0, 0, 0, 0.85)";
   vx.beginPath(); vx.ellipse(0, 22, 445, 445 * TILT, 0, 0, Math.PI * 2); vx.fill();
   vx.fillStyle = "#13161f";
   vx.beginPath(); vx.ellipse(0, 10, 440, 440 * TILT, 0, 0, Math.PI * 2); vx.fill();
 
-  // Поверхность винила
   const g = vx.createRadialGradient(-40, -20, 30, 0, 0, 440);
   g.addColorStop(0, "#191d28");
   g.addColorStop(0.55, "#0d0f15");
@@ -199,7 +173,6 @@ function drawVinylLoop() {
   vx.lineWidth = 1.5;
   vx.stroke();
 
-  // Звуковые дорожки
   for (let r = 122; r < 430; r += 8) {
     vx.beginPath(); vx.ellipse(0, 0, r, r * TILT, 0, 0, Math.PI * 2);
     vx.strokeStyle = r % 24 === 0 ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.018)";
@@ -207,11 +180,9 @@ function drawVinylLoop() {
     vx.stroke();
   }
 
-  // КОЛЬЦЕВЫЕ УЛИЦЫ И ИЗВИЛИСТЫЕ КАНАЛЫ (строго вдоль круга!)
   vx.save();
   vx.beginPath(); vx.ellipse(0, 0, 437, 437 * TILT, 0, 0, Math.PI * 2); vx.clip();
 
-  // Сначала рисуем кольцевые проспекты с тонкой осевой разметкой
   STREETS_R.forEach(sr => {
     vx.beginPath();
     for (let a = 0; a <= Math.PI * 2 + 0.06; a += 0.04) {
@@ -221,14 +192,13 @@ function drawVinylLoop() {
     vx.strokeStyle = "#0a0c11";
     vx.lineWidth = 13;
     vx.stroke();
-    vx.setLineDash([4, 8]);
+    vx.setLineDash([4, 6]);
     vx.strokeStyle = "rgba(255, 255, 255, 0.09)";
     vx.lineWidth = 0.8;
     vx.stroke();
     vx.setLineDash([]);
   });
 
-  // Короткие поперечные переулки
   ALLEYS.forEach(al => {
     const p1 = pt(al.r1, al.a), p2 = pt(al.r2, al.a);
     vx.beginPath(); vx.moveTo(p1.x, p1.y); vx.lineTo(p2.x, p2.y);
@@ -237,23 +207,19 @@ function drawVinylLoop() {
     vx.stroke();
   });
 
-  // Кольцевые водные каналы с гранитной набережной
   CANALS.forEach(c => {
     vx.beginPath();
     for (let a = 0; a <= Math.PI * 2 + 0.06; a += 0.04) {
       const p = pt(getCanalR(c, a), a);
       a === 0 ? vx.moveTo(p.x, p.y) : vx.lineTo(p.x, p.y);
     }
-    // Гранитная набережная
     vx.strokeStyle = "rgba(130, 142, 168, 0.22)";
     vx.lineWidth = c.width + 3;
     vx.stroke();
-    // Тёмная вода канала
     vx.strokeStyle = "#050609";
     vx.lineWidth = c.width;
     vx.stroke();
 
-    // Маленькие мостики через канал
     [0.8, 2.4, 4.0, 5.5].forEach(ba => {
       const rMid = getCanalR(c, ba);
       const b1 = pt(rMid - c.width * 0.65, ba), b2 = pt(rMid + c.width * 0.65, ba);
@@ -266,7 +232,6 @@ function drawVinylLoop() {
 
   vx.restore();
 
-  // Пустое центральное яблоко пластинки
   vx.fillStyle = "#151923";
   vx.beginPath(); vx.ellipse(0, 0, 112, 112 * TILT, 0, 0, Math.PI * 2); vx.fill();
   vx.strokeStyle = "rgba(196, 163, 90, 0.45)";
@@ -275,7 +240,6 @@ function drawVinylLoop() {
   vx.fillStyle = "#07080b";
   vx.beginPath(); vx.ellipse(0, 0, 11, 11 * TILT, 0, 0, Math.PI * 2); vx.fill();
 
-  // Дома, стоящие чётко вдоль улиц и каналов
   HOUSES.forEach(drawHouse);
 
   vx.restore();
